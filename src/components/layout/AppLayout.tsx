@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router'
 import { ChefHat, Home, Plus, Salad, Sparkles } from 'lucide-react'
 import { PageHeader } from './PageHeader'
+import { FoodProvider } from '../../context/FoodContext'
 
 const navigation = [
   { label: 'Home', to: '/app', icon: Home },
@@ -12,6 +13,7 @@ const navigation = [
 
 export function AppLayout() {
   return (
+    <FoodProvider>
     <div className="flex min-h-svh flex-col bg-[#f8f7f2] text-stone-900">
       <PageHeader />
       <main className="mx-auto flex w-full max-w-6xl flex-1 px-5 py-8 pb-28 sm:px-8 lg:py-12 lg:pb-12">
@@ -35,5 +37,6 @@ export function AppLayout() {
         </div>
       </nav>
     </div>
+    </FoodProvider>
   )
 }
