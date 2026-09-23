@@ -1,0 +1,22 @@
+category_id,id,label,days_closed,days_opened
+produce,vegetables,Vegetables,7,3
+produce,fruits,Fruits,7,2
+produce,leafy-greens,Leafy Greens,5,3
+produce,herbs,Herbs,7,2
+dairy,milk,Milk,14,5
+dairy,yogurt,Yogurt,14,5
+dairy,cheese,Cheese,21,7
+dairy,eggs,Eggs,21,21
+dairy,butter,Butter,30,14
+meat,chicken,Chicken,3,2
+meat,beef,Beef,4,2
+meat,pork,Pork,3,2
+meat,seafood,Seafood,2,1
+grains,rice,Rice,180,60
+grains,pasta,Pasta,365,90
+grains,bread,Bread,7,5
+grains,oats,Oats,365,90
+pantry,canned-goods,Canned Goods,730,14
+pantry,condiments,Condiments,365,30
+pantry,snacks,Snacks,90,14
+pantry,spices,Spices,730,730

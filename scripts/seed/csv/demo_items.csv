@@ -1,0 +1,7 @@
+id,name,category_id,subcategory_id,quantity,unit,storage,days_added,days_opened,days_frozen,is_leftover,purchase_price
+demo-chicken,Chicken Breast,meat,chicken,500,g,fridge,3,2,,,0
+demo-rice,Leftover Rice,grains,rice,400,g,fridge,1,1,,true,0
+demo-tomatoes,Tomatoes,produce,vegetables,3,pcs,fridge,5,,,false,45
+demo-milk,Milk,dairy,milk,700,ml,fridge,4,3,,false,80
+demo-eggs,Eggs,dairy,eggs,6,pcs,fridge,1,,,false,120
+demo-beef,Beef,meat,beef,500,g,freezer,3,,3,false,250
