@@ -2,89 +2,38 @@
 
 _Seventh Stack | AppCon Hackathon_ 
 
-Task backlog for FRESHVII, the food freshness and rescue PWA developed by Seventh Stack for AppCon. 
-
-**Legend:** [x] done  ·  [ ] not started  ·  [-] in progress 
-
-**Owners:** [LEAD] Leader/Pitcher  ·  [UI] UI/UX  ·  [FE] Frontend  ·  [BE] Backend  ·  [QA] QA/Product Critic 
-
-## **Phase 0 - Project foundation** 
 
 - [X] [LEAD] Finalize MVP scope 
 
-- [ ] [LEAD] Finalize main demo flow 
-
-- [X] [LEAD] Create shared project documentation 
-
+ [X] [FE] Quick “Mark as Opened” action 
 - [X ] [FE] Initialize React + TypeScript + Vite 
 
 - [X ] [FE] Configure Tailwind CSS 
-
-- [X] [FE] Configure shadcn/ui 
-
-- [X ] [FE] Configure React Router 
-
+ [X] [FE] Move to Freezer control 
 - [X] [FE] Configure PWA manifest + service worker 
 
 - [X] [FE] Configure API service layer 
-
-- [X] [FE] Configure TanStack Query if needed (deferred; Firebase repositories are the current data boundary) 
-
-- [X ] [BE] Initialize backend project 
-
-- [X ] [BE] Configure database 
-
+ [X] [FE] “How much did you use?” prompt 
 - [X ] [BE] Configure environment variables 
 
 - [ ] [BE] Prepare seed/demo data 
-
-- [ ] [UI] Finalize initial visual direction 
-
-- [ ] [QA] Define MVP acceptance criteria 
-
 ## **Phase 1 - Food domain & data model** 
 
 ### **Food Item** 
 
 - [X] [BE] Define Food DTO 
-
-- [X] [BE] Define Food entity/model 
-
-FRESHVII | Seventh Stack | AppCon Hackathon 
-
-- [X] [BE] Define food categories 
-
 - [X] [BE] Define supported measurement units 
 
 - [X] [BE] Define storage locations: Fridge, Freezer, Pantry 
-
-- [X] [BE] Define freshness statuses: Fresh, Use Soon, Rescue Today, Expired 
-
-### **Food lifecycle** 
-
-Added -> Stored -> Opened -> Partially Consumed -> Frozen / Moved -> Cooked -> Leftover -> Consumed / Discarded 
-
+ [X] [FE] Recommended recipe list 
 - [X] [BE] Track date_added
 
 - [X] [BE] Track quantity + unit
 
-- [X] [BE] Track storage location
-
-- [X] [BE] Track opened/unopened state
-
-- [X] [BE] Track opened_at
-
 - [X] [BE] Track frozen_at
 
-- [X] [BE] Track consumption state
-
-- [X] [BE] Track discarded state
-
-- [X] [BE] Support partial quantity updates
-
-- [X] [BE] Support leftover creation
-
-## **Phase 2 - Freshness engine** 
+ [X] [FE] Items at risk metric 
+ [X] [FE] “Cook This” CTA 
 
 - - [X] [BE] Freshness calculation must work without sensor data
 
@@ -264,77 +213,77 @@ FRESHVII | Seventh Stack | AppCon Hackathon
 
 ### **U1 - Home / Visual Fridge** 
 
-- [ ] [FE] Fridge / Freezer / Pantry tabs 
+- [X] [FE] Fridge / Freezer / Pantry tabs 
 
-- [ ] [FE] Visual fridge layout 
+- [X] [FE] Visual fridge layout 
 
-- [ ] [FE] Display food items 
+- [X] [FE] Display food items 
 
-- [ ] [FE] Display freshness status 
+- [X] [FE] Display freshness status 
 
-- [ ] [FE] Display Rescue Today items 
+- [X] [FE] Display Rescue Today items 
 
-- [ ] [FE] At-risk food counter 
+- [X] [FE] At-risk food counter 
 
-- [ ] [FE] Rescue My Food CTA 
+- [X] [FE] Rescue My Food CTA 
 
 - [ ] [FE] Quick food actions 
 
-- [ ] [FE] Empty fridge state 
+- [X] [FE] Empty fridge state 
 
-- [ ] [FE] Responsive mobile layout 
+- [X] [FE] Responsive mobile layout 
 
 ### **U2 - Add Food** 
 
-- [ ] [FE] Food name input 
+- [X] [FE] Food name input 
 
 FRESHVII | Seventh Stack | AppCon Hackathon 
 
-- [ ] [FE] Quantity input 
+- [X] [FE] Quantity input 
 
-- [ ] [FE] Unit selector 
+- [X] [FE] Unit selector 
 
-- [ ] [FE] Storage location selector 
+- [X] [FE] Storage location selector 
 
-- [ ] [FE] Date stored 
+- [X] [FE] Date stored 
 
-- [ ] [FE] Opened / Unopened selector 
+- [X] [FE] Opened / Unopened selector 
 
 - [ ] [FE] Camera capture UI 
 
 - [ ] [FE] Barcode option 
 
-- [ ] [FE] Manual entry fallback 
+- [X] [FE] Manual entry fallback 
 
 - [ ] [FE] Confirmation before save 
 
-- [ ] [FE] Validation and error handling 
+- [X] [FE] Validation and error handling 
 
 ### **U3 - Food Detail** 
 
-- [ ] [FE] Food image/icon 
+- [X] [FE] Food image/icon 
 
-- [ ] [FE] Food name 
+- [X] [FE] Food name 
 
-- [ ] [FE] Quantity + unit 
+- [X] [FE] Quantity + unit 
 
-- [ ] [FE] Freshness percentage 
+- [X] [FE] Freshness percentage 
 
-- [ ] [FE] Freshness status 
+- [X] [FE] Freshness status 
 
-- [ ] [FE] Estimated remaining time 
+- [X] [FE] Estimated remaining time 
 
-- [ ] [FE] Storage location 
+- [X] [FE] Storage location 
 
-- [ ] [FE] Opened status 
+- [X] [FE] Opened status 
 
-- [ ] [FE] Mark Consumed 
+- [X] [FE] Mark Consumed 
 
-- [ ] [FE] Mark Opened 
+- [X] [FE] Mark Opened 
 
-- [ ] [FE] Move to Freezer 
+- [X] [FE] Move to Freezer 
 
-- [ ] [FE] Discard 
+- [X] [FE] Discard 
 
 - [ ] [FE] Edit item 
 
@@ -342,69 +291,69 @@ FRESHVII | Seventh Stack | AppCon Hackathon
 
 **Fast actions** 
 
-- [ ] [FE] One-tap Consumed 
+- [X] [FE] One-tap Consumed 
 
-- [ ] [FE] One-tap Froze It 
+- [X] [FE] One-tap Froze It 
 
 FRESHVII | Seventh Stack | AppCon Hackathon 
 
-- [ ] [FE] One-tap Discarded 
+- [X] [FE] One-tap Discarded 
 
-- [ ] [BE] Endpoint/action for Consumed 
+- [X] [BE] Endpoint/action for Consumed 
 
-- [ ] [BE] Endpoint/action for Frozen 
+- [X] [BE] Endpoint/action for Frozen 
 
-- [ ] [BE] Endpoint/action for Discarded 
+- [X] [BE] Endpoint/action for Discarded 
 
 - [ ] [QA] Test all state transitions 
 
 ### **Opened vs Unopened** 
 
-- [ ] [FE] Quick “Mark as Opened” action 
+- [X] [FE] Quick “Mark as Opened” action 
 
-- [ ] [BE] Store opened_at 
+- [X] [BE] Store opened_at 
 
-- [ ] [BE] Recalculate estimated freshness after opening 
+- [X] [BE] Recalculate estimated freshness after opening 
 
 - [ ] [QA] Verify shorter freshness after opening 
 
 ### **Move to Freezer** 
 
-- [ ] [FE] Move to Freezer control 
+- [X] [FE] Move to Freezer control 
 
-- [ ] [BE] Update storage location 
+- [X] [BE] Update storage location 
 
-- [ ] [BE] Store frozen_at 
+- [X] [BE] Store frozen_at 
 
-- [ ] [BE] Recalculate freshness estimate 
+- [X] [BE] Recalculate freshness estimate 
 
 - [ ] [QA] Ensure old fridge expiry is not still shown 
 
 ### **Partial consumption** 
 
-- [ ] [FE] “How much did you use?” prompt 
+- [X] [FE] “How much did you use?” prompt 
 
-- [ ] [FE] Used All option 
+- [X] [FE] Used All option 
 
-- [ ] [FE] Used Half option 
+- [X] [FE] Used Half option 
 
-- [ ] [FE] Custom quantity option 
+- [X] [FE] Custom quantity option 
 
-- [ ] [BE] Deduct used amount 
+- [X] [BE] Deduct used amount 
 
-- [ ] [BE] Preserve remaining quantity 
+- [X] [BE] Preserve remaining quantity 
 
 - [ ] [QA] Verify quantities never become invalid 
 
 ### **Leftovers** 
 
-- [ ] [FE] Ask “Do you have leftovers?” 
+- [X] [FE] Ask “Do you have leftovers?” 
 
-- [ ] [FE] Add leftover flow 
+- [X] [FE] Add leftover flow 
 
-- [ ] [BE] Create leftover FoodItem 
+- [X] [BE] Create leftover FoodItem 
 
-- [ ] [BE] Reset freshness timer using leftover food rules 
+- [X] [BE] Reset freshness timer using leftover food rules 
 
 FRESHVII | Seventh Stack | AppCon Hackathon 
 
@@ -414,9 +363,9 @@ FRESHVII | Seventh Stack | AppCon Hackathon
 
 ### **Rescue engine** 
 
-- [ ] [BE] Get highest-risk ingredients 
+- [X] [BE] Get highest-risk ingredients 
 
-- [ ] [BE] Rank ingredients using Rescue Score 
+- [X] [BE] Rank ingredients using Rescue Score 
 
 - [ ] [BE] Match ingredients with possible recipes 
 
@@ -430,31 +379,31 @@ FRESHVII | Seventh Stack | AppCon Hackathon
 
 ### **Rescue UI** 
 
-- [ ] [FE] High-risk ingredient section 
+- [X] [FE] High-risk ingredient section 
 
-- [ ] [FE] Rescue Score display 
+- [X] [FE] Rescue Score display 
 
-- [ ] [FE] Recommended recipe list 
+- [X] [FE] Recommended recipe list 
 
-- [ ] [FE] Highlight rescued ingredients 
+- [X] [FE] Highlight rescued ingredients 
 
-- [ ] [FE] Show missing ingredients 
+- [X] [FE] Show missing ingredients 
 
-- [ ] [FE] Show preparation time 
+- [X] [FE] Show preparation time 
 
-- [ ] [FE] “Cook This” CTA 
+- [X] [FE] “Cook This” CTA 
 
 ### **Cook flow** 
 
-- [ ] [FE] Cook confirmation 
+- [X] [FE] Cook confirmation 
 
-- [ ] [FE] Ingredient usage confirmation 
+- [X] [FE] Ingredient usage confirmation 
 
-- [ ] [FE] Partial-use prompt 
+- [X] [FE] Partial-use prompt 
 
-- [ ] [FE] Leftover prompt 
+- [X] [FE] Leftover prompt 
 
-- [ ] [BE] Update inventory after cooking 
+- [X] [BE] Update inventory after cooking 
 
 - [ ] [QA] Test entire Rescue -> Cook -> Inventory flow 
 
@@ -470,7 +419,7 @@ FRESHVII | Seventh Stack | AppCon Hackathon
 
 - [ ] [FE] Capture image 
 
-- [ ] [FE] Manual fallback 
+- [X] [FE] Manual fallback 
 
 - [ ] [FE] Confirmation/edit screen 
 
@@ -490,13 +439,13 @@ These are optional because recognition must never block the basic Add Food flow.
 
 ## **Phase 8 - Dashboard & impact** 
 
-- [ ] [FE] Ingredients rescued metric 
+- [X] [FE] Ingredients rescued metric 
 
-- [ ] [FE] Items at risk metric 
+- [X] [FE] Items at risk metric 
 
-- [ ] [FE] Meals prepared metric 
+- [X] [FE] Meals prepared metric 
 
-- [ ] [FE] Estimated food saved 
+- [X] [FE] Estimated food saved 
 
 - [ ] [FE] Estimated money saved 
 
@@ -516,9 +465,9 @@ THIS WEEK
 
 FRESHVII | Seventh Stack | AppCon Hackathon 
 
-- [ ] [FE] Notification permission flow 
+- [X] [FE] Notification permission flow 
 
-- [ ] [FE] Local/PWA notification support 
+- [X] [FE] Local/PWA notification support 
 
 - [ ] [QA] Verify notification behavior 
 
