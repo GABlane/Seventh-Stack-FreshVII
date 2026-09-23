@@ -12,12 +12,12 @@ const navigation = [
 
 export function AppLayout() {
   return (
-    <div className="flex min-h-svh flex-col bg-[#f8f7f2] text-stone-900">
+    <div className="flex min-h-svh flex-col bg-[#eefafd] text-stone-900">
       <PageHeader />
       <main className="mx-auto flex w-full max-w-6xl flex-1 px-5 py-8 pb-28 sm:px-8 lg:py-12 lg:pb-12">
         <Outlet />
       </main>
-      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-[#e5e1d5] bg-[#f8f7f2]/95 px-3 py-3 backdrop-blur lg:static lg:mx-auto lg:w-full lg:max-w-6xl lg:border-0 lg:bg-transparent lg:px-8 lg:py-5">
+      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-[#cde6ed] bg-[#eefafd]/95 px-3 py-3 backdrop-blur lg:static lg:mx-auto lg:w-full lg:max-w-6xl lg:border-0 lg:bg-transparent lg:px-8 lg:py-5">
         <div className="mx-auto flex max-w-xl items-center justify-between lg:max-w-none lg:justify-start lg:gap-2">
           {navigation.map(({ label, to, icon: Icon }) => (
             <NavLink
