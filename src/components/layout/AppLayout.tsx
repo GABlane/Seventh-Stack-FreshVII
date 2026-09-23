@@ -3,11 +3,11 @@ import { ChefHat, Home, Plus, Salad, Sparkles } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 
 const navigation = [
-  { label: 'Home', to: '/', icon: Home },
-  { label: 'Rescue', to: '/rescue', icon: Sparkles },
-  { label: 'Add food', to: '/add-food', icon: Plus },
-  { label: 'Recipes', to: '/recipes', icon: ChefHat },
-  { label: 'History', to: '/consumption', icon: Salad },
+  { label: 'Home', to: '/app', icon: Home },
+  { label: 'Rescue', to: '/app/rescue', icon: Sparkles },
+  { label: 'Add food', to: '/app/add-food', icon: Plus },
+  { label: 'Recipes', to: '/app/recipes', icon: ChefHat },
+  { label: 'History', to: '/app/consumption', icon: Salad },
 ]
 
 export function AppLayout() {
@@ -23,7 +23,7 @@ export function AppLayout() {
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === '/app'}
               className={({ isActive }) =>
                 `flex min-w-14 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-[11px] font-semibold transition-colors lg:flex-row lg:gap-2 lg:text-sm ${isActive ? 'bg-[#dce9de] text-[#426a5a]' : 'text-stone-500 hover:bg-white hover:text-stone-800'}`
               }

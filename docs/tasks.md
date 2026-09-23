@@ -1,156 +1,1000 @@
-# FRESHVII Workplan
+# **FRESHVII - Project Tasks** 
 
-## Product Goal
+_Seventh Stack | AppCon Hackathon_ 
 
-Build a real-time food expiry tracker that helps people see what is in their fridge, understand what needs attention, rescue food before it expires, and record consumption without losing inventory accuracy.
+Task backlog for FRESHVII, the food freshness and rescue PWA developed by Seventh Stack for AppCon. 
 
-## Phase 0: Project Foundation
+**Legend:** [x] done  ·  [ ] not started  ·  [-] in progress 
 
-- [ ] Confirm Firebase project, web app credentials, Authentication providers, and Firestore database.
-- [ ] Add environment variables from `.env.example` and verify local Firebase initialization.
-- [ ] Confirm Tailwind CSS v4 and shadcn/ui configuration in `components.json`.
-- [ ] Add the shared `cn` utility and required shadcn primitives.
-- [ ] Configure routing for Home, Add Food, Food Detail, Rescue My Food, Recipes, and Consumption.
-- [ ] Add a mock repository so UI work can proceed without a live Firebase project.
-- [ ] Establish lint, typecheck, build, and test commands in the contribution workflow.
+**Owners:** [LEAD] Leader/Pitcher  ·  [UI] UI/UX  ·  [FE] Frontend  ·  [BE] Backend  ·  [QA] QA/Product Critic 
 
-## Phase 1: Data and Domain Logic
+## **Phase 0 - Project foundation** 
 
-- [ ] Define TypeScript models for users, food items, storage locations, freshness, recipes, and food events.
-- [ ] Implement freshness calculation from estimated expiry, opened date, frozen date, and current time.
-- [ ] Implement the states `fresh`, `use-soon`, `rescue-today`, and `expired`.
-- [ ] Implement a 0-100 rescue score with explainable factors: urgency, quantity, and usefulness in recipes.
-- [ ] Define food lifecycle events for added, opened, frozen, partially consumed, fully consumed, and discarded.
-- [ ] Add unit tests for date boundaries, timezone handling, frozen items, opened items, and partial quantities.
+- [X] [LEAD] Finalize MVP scope 
 
-## Phase 2: Firebase and Real-Time Repository
+- [ ] [LEAD] Finalize main demo flow 
 
-- [ ] Create Firestore collections and security rules for user-owned inventory and events.
-- [ ] Implement authenticated user session handling.
-- [ ] Implement real-time food item subscription with `onSnapshot`.
-- [ ] Implement create, update, archive, consume, discard, freeze, and unfreeze repository methods.
-- [ ] Use batched writes or transactions when an action updates both an item and its event history.
-- [ ] Add loading, empty, offline, permission, and error states.
-- [ ] Add indexes only when query requirements are confirmed by the running app.
+- [X] [LEAD] Create shared project documentation 
 
-## Phase 3: Shared UI Components
+- [X ] [FE] Initialize React + TypeScript + Vite 
 
-- [ ] Build `Fridge` for visual storage sections and item placement.
-- [ ] Build `FridgeShelf` for shelf-level grouping and responsive layout.
-- [ ] Build `FoodItem` as the compact visual representation of an inventory item.
-- [ ] Build `FreshnessBadge` with color, icon, label, and accessible text.
-- [ ] Build `StorageTabs` for fridge, freezer, and pantry views.
-- [ ] Build `FoodCard` with quantity, unit, opened state, expiry, and quick actions.
-- [ ] Build `QuantitySelector` with decimal-safe increment, decrement, and validation behavior.
-- [ ] Build `RecipeCard` with match score, prep time, and required ingredients.
-- [ ] Build `QuickActionMenu` and swipe actions for consume, freeze, and discard.
-- [ ] Add keyboard, screen-reader, touch, and reduced-motion support to interactive components.
+- [X ] [FE] Configure Tailwind CSS 
 
-## Phase 4: Screens and User Flows
+- [X] [FE] Configure shadcn/ui 
 
-### Home / Visual Fridge
+- [X ] [FE] Configure React Router 
 
-- [ ] Show freshness summary, items at risk, and value or quantity at risk.
-- [ ] Render `StorageTabs`, `Fridge`, `FridgeShelf`, and `FoodCard` from the live repository.
-- [ ] Support filtering by freshness and searching by food name.
-- [ ] Make changes appear immediately after a Firebase update.
+- [X] [FE] Configure PWA manifest + service worker 
 
-### Add Food
+- [X] [FE] Configure API service layer 
 
-- [ ] Build manual entry for name, quantity, unit, storage location, and opened state.
-- [ ] Capture date added, opened date, frozen date, and estimated expiry when applicable.
-- [ ] Add optional barcode, photo, and category fields without making them required for the MVP.
-- [ ] Validate and preview the item before saving.
+- [X] [FE] Configure TanStack Query if needed (deferred; Firebase repositories are the current data boundary) 
 
-### Food Detail
+- [X ] [BE] Initialize backend project 
 
-- [ ] Show the complete item timeline and current freshness explanation.
-- [ ] Allow editing quantity, location, opened state, expiry, and notes.
-- [ ] Provide consume, freeze, unfreeze, and discard actions with confirmation where destructive.
+- [X ] [BE] Configure database 
 
-### Rescue My Food
+- [X ] [BE] Configure environment variables 
 
-- [ ] Rank urgent items by rescue score.
-- [ ] Explain why each item is urgent and show the remaining quantity.
-- [ ] Link selected ingredients to recipe recommendations.
+- [ ] [BE] Prepare seed/demo data 
 
-### Recipe Recommendation
+- [ ] [UI] Finalize initial visual direction 
 
-- [ ] Match available ingredients to recipe requirements.
-- [ ] Prioritize recipes that use rescue items first.
-- [ ] Show missing ingredients separately from ingredients already available.
-- [ ] Support a clear `Cook This` action that opens the consumption flow.
+- [ ] [QA] Define MVP acceptance criteria 
 
-### Consumption / Partial Use
+## **Phase 1 - Food domain & data model** 
 
-- [ ] Ask how much of each selected item was used.
-- [ ] Decrease quantity for partial use and archive the item at zero quantity.
-- [ ] Record a consumption event and optional leftover details.
-- [ ] Allow leftovers to receive a new opened date and estimated expiry.
-- [ ] Update Home, Rescue, Recipes, and history views from the same source of truth.
+### **Food Item** 
 
-## Phase 5: Quality and Release
+- [X] [BE] Define Food DTO 
 
-- [ ] Test the primary flows on mobile and desktop breakpoints.
-- [ ] Verify Firestore rules for authenticated ownership and unauthorized access.
-- [ ] Verify real-time updates in two browser sessions.
-- [ ] Test offline recovery and duplicate action prevention.
-- [ ] Run `npm run lint` and `npm run build` before every release candidate.
-- [ ] Document Firebase setup, seed data, known limitations, and deployment steps.
+- [X] [BE] Define Food entity/model 
 
-## MVP Completion Criteria
+FRESHVII | Seventh Stack | AppCon Hackathon 
 
-The MVP is complete when an authenticated user can add food, see it in the visual fridge, receive freshness status, open its detail view, partially consume or discard it, find urgent items in Rescue My Food, and receive recipe recommendations using live Firestore data.# FRESHVII Project Implementation Tasks
+- [X] [BE] Define food categories 
 
-## Phase 1: Project Initialization & Infrastructure
-- [ ] Initialize a new project using React, TypeScript, and Vite[cite: 1].
-- [ ] Configure Tailwind CSS for styling[cite: 1].
-- [ ] Install and set up shadcn/ui components[cite: 1].
-- [ ] Configure the application as a Progressive Web App (PWA) with mobile camera support[cite: 1].
-- [ ] Set up TanStack Query for state management[cite: 1].
-- [ ] Define the backend Data Transfer Objects (DTOs) and food-state structure[cite: 1].
-- [ ] Implement mock data for the frontend to run independently[cite: 1].
+- [X] [BE] Define supported measurement units 
 
-## Phase 2: Design System & UI Components
-- [ ] Configure the Tailwind color palette: Primary (#426A5A), Highlight (#F2C57C), Borders (#DDAE7E), Success (#7FB685), and Waste accent (#EF6F6C)[cite: 4].
-- [ ] Build the food items using the shadcn/ui Card component[cite: 4].
-- [ ] Build freshness state markers using the shadcn/ui Badge component[cite: 4].
-- [ ] Build bottom menus and details using the shadcn/ui Sheet component[cite: 4].
-- [ ] Build confirmation dialogs using the shadcn/ui AlertDialog component[cite: 4].
-- [ ] Build toast notifications using the shadcn/ui Sonner component[cite: 4].
-- [ ] Build storage location switchers using the shadcn/ui Tabs component[cite: 4].
-- [ ] Build the opened/unopened toggle using the shadcn/ui Switch component[cite: 4].
-- [ ] Build shelf-life meters using the shadcn/ui Progress component[cite: 4].
-- [ ] Implement freshness visual guidelines combining color, icon, and text[cite: 1, 4].
+- [X] [BE] Define storage locations: Fridge, Freezer, Pantry 
 
-## Phase 3: Core Logic & Data Modeling
-- [ ] Define the four freshness states: Fresh, Use Soon, Rescue Today, and Expired[cite: 1].
-- [ ] Write the freshness estimation logic calculating time based on category, storage date, shelf life, location, and opened/frozen status[cite: 1].
-- [ ] Write the Rescue Score algorithm to rank food urgency on a 0-100 scale[cite: 1].
+- [X] [BE] Define freshness statuses: Fresh, Use Soon, Rescue Today, Expired 
 
-## Phase 4: Screen 1 – Home / Visual Fridge
-- [ ] Create the main dashboard showing total items and financial value at risk[cite: 2].
-- [ ] Build the visual fridge with Fridge, Freezer, and Pantry tabs[cite: 1].
-- [ ] Create food cards displaying item name, quantity, unit, location, opened status, and freshness badge[cite: 4].
-- [ ] Build the bottom navigation bar with Home, Rescue, Add Food, Recipes, and Insights icons[cite: 2].
-- [ ] Implement left-swipe gesture on food cards for Consumed, Froze It, and Discarded quick actions[cite: 4].
+### **Food lifecycle** 
 
-## Phase 5: Screen 2 – Add Food
-- [ ] Integrate Camera APIs for barcode and photo scanning[cite: 1].
-- [ ] Build the manual data entry form capturing name, quantity, unit, storage, and opened status[cite: 1].
-- [ ] Build the user confirmation screen for verifying details before saving to inventory[cite: 1, 3].
+Added -> Stored -> Opened -> Partially Consumed -> Frozen / Moved -> Cooked -> Leftover -> Consumed / Discarded 
 
-## Phase 6: Screen 3 – Food Details & Lifecycle Adaptability
-- [ ] Build the detailed food view showing quantity, current freshness, time left, storage, and opened status[cite: 1].
-- [ ] Write state transition logic to start a shorter shelf-life clock when a sealed item is marked "Opened"[cite: 1, 3].
-- [ ] Write state transition logic to pause or extend the expiration timeline when an item is moved to the freezer[cite: 1, 5].
+- [X] [BE] Track date_added
 
-## Phase 7: Screens 4 & 5 – Rescue My Food & Recipes
-- [ ] Build the "Rescue My Food" screen to aggregate high-risk ingredients based on Rescue Scores[cite: 1].
-- [ ] Build the meal recommendation engine to suggest recipes using urgent ingredients[cite: 1].
-- [ ] Build the Recipe view showing required ingredients, preparation time, and a "Cook This" button[cite: 1].
+- [X] [BE] Track quantity + unit
 
-## Phase 8: Screen 6 – Consumption & Leftovers
-- [ ] Build the consumption confirmation flow asking "How much did you use?"[cite: 1].
-- [ ] Write partial usage logic to create a new "Leftover" inventory item with a new fresh timer[cite: 1].
-- [ ] Connect all actions (consuming, cooking, discarding) to update Home, Rescue, Recipes, and Insights tabs instantly[cite: 3].
+- [X] [BE] Track storage location
+
+- [X] [BE] Track opened/unopened state
+
+- [X] [BE] Track opened_at
+
+- [X] [BE] Track frozen_at
+
+- [X] [BE] Track consumption state
+
+- [X] [BE] Track discarded state
+
+- [X] [BE] Support partial quantity updates
+
+- [X] [BE] Support leftover creation
+
+## **Phase 2 - Freshness engine** 
+
+- - [X] [BE] Freshness calculation must work without sensor data
+
+- - [ ] [BE] Support optional environmental/sensor inputs 
+
+- - [X] [BE] Define confidence/estimate handling
+
+- - [X] [FE] Clearly label freshness values as estimates
+
+- - [ ] [QA] Test freshness behavior when sensor data is unavailable 
+
+- - [ ] [QA] Test unreliable/missing environmental readings 
+
+### **MVP freshness estimation** 
+
+- [X] [BE] Create baseline shelf-life dataset
+
+- [X] [BE] Calculate estimated expiry from food type + storage date
+
+- [X] [BE] Adjust freshness when item is opened
+
+- [X] [BE] Adjust freshness when item moves to freezer
+
+- [X] [BE] Adjust freshness when storage location changes
+
+- [X] [BE] Generate freshness percentage
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [X] [BE] Generate freshness status
+
+- [X] [BE] Generate estimated remaining days
+
+- [X] [BE] Ensure system communicates estimates rather than guaranteed spoilage dates
+
+### **Rescue Score** 
+
+- [X] [BE] Define Rescue Score calculation
+
+- [X] [BE] Increase score as estimated expiry approaches
+
+- [X] [BE] Consider opened state
+
+- [X] [BE] Consider storage location
+
+- [X] [BE] Consider remaining quantity
+
+- [X] [BE] Sort inventory by urgency
+
+- [ ] [QA] Validate Rescue Score behavior using sample foods 
+
+|**Food**|**Freshness**|**Rescue Score**|
+|---|---|---|
+|Chicken Breast|Rescue Today|95|
+|Leftover Rice|Rescue Today|89|
+|Tomatoes|Use Soon|78|
+|Milk|Use Soon|61|
+|Eggs|Fresh|20|
+
+
+
+## **Phase 3 - UI/UX design** 
+
+### **Core visual direction** 
+
+- [X] [UI] Establish FRESHVII visual direction 
+
+- [X] [UI] Define typography 
+
+- [X] [UI] Define spacing system 
+
+- [X] [UI] Define buttons 
+
+- [X] [UI] Define cards 
+
+- [X] [UI] Define freshness badges 
+
+- [X] [UI] Define icons / visual cues 
+
+- [X] [UI] Ensure freshness state does not rely only on color 
+
+- [X] [UI] Define responsive/mobile-first behavior 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+### **Core screens** 
+
+- [X] [UI] U1 - Home / Visual Fridge 
+
+- [X] [UI] U2 - Add Food 
+
+- [X] [UI] U3 - Food Detail 
+
+- [X] [UI] U4 - Rescue My Food 
+
+- [X] [UI] U5 - Recipe Recommendation 
+
+- [X] [UI] U6 - Consumption Confirmation 
+
+### **Visual fridge** 
+
+- [X] [UI] Design Fridge / Freezer / Pantry tabs 
+
+- [X] [UI] Design fridge shelves 
+
+- [X] [UI] Design food item appearance 
+
+- [X] [UI] Design freshness indicators 
+
+- [X] [UI] Design “Rescue Today” emphasis 
+
+- [X] [UI] Design main Rescue My Food CTA 
+
+- [X] [UI] Design empty fridge state 
+
+- [X] [UI] Design stocked fridge state 
+
+- [X] [UI] Design at-risk fridge state 
+
+### **Interaction states** 
+
+- [ ] [UI] Swipe / quick action - Consumed 
+
+- [ ] [UI] Swipe / quick action - Froze It 
+
+- [ ] [UI] Swipe / quick action - Discarded 
+
+- [ ] [UI] Opened / Unopened transition 
+
+- [ ] [UI] Move to Freezer flow 
+
+- [ ] [UI] Partial consumption flow 
+
+- [ ] [UI] Leftover creation flow 
+
+- [ ] [UI] Loading states 
+
+- [ ] [UI] Empty states 
+
+- [ ] [UI] Error states 
+
+- [ ] [UI] Success states 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+## **Phase 4 - Frontend MVP** 
+
+### **Shared components** 
+
+- [ ] [FE] AppLayout 
+
+- [ ] [FE] PageHeader 
+
+- [X] [FE] StorageTabs 
+
+- [X] [FE] Fridge 
+
+- [X] [FE] FridgeShelf 
+
+- [X] [FE] FoodItem 
+
+- [X] [FE] FoodCard 
+
+- [X] [FE] FreshnessBadge 
+
+- [X] [FE] FreshnessProgress 
+
+- [X] [FE] QuantitySelector 
+
+- [ ] [FE] QuickActionMenu 
+
+- [X] [FE] RecipeCard 
+
+- [X] [FE] EmptyState 
+
+- [ ] [FE] Shared Dialog / Drawer / Toast components 
+
+### **U1 - Home / Visual Fridge** 
+
+- [ ] [FE] Fridge / Freezer / Pantry tabs 
+
+- [ ] [FE] Visual fridge layout 
+
+- [ ] [FE] Display food items 
+
+- [ ] [FE] Display freshness status 
+
+- [ ] [FE] Display Rescue Today items 
+
+- [ ] [FE] At-risk food counter 
+
+- [ ] [FE] Rescue My Food CTA 
+
+- [ ] [FE] Quick food actions 
+
+- [ ] [FE] Empty fridge state 
+
+- [ ] [FE] Responsive mobile layout 
+
+### **U2 - Add Food** 
+
+- [ ] [FE] Food name input 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] [FE] Quantity input 
+
+- [ ] [FE] Unit selector 
+
+- [ ] [FE] Storage location selector 
+
+- [ ] [FE] Date stored 
+
+- [ ] [FE] Opened / Unopened selector 
+
+- [ ] [FE] Camera capture UI 
+
+- [ ] [FE] Barcode option 
+
+- [ ] [FE] Manual entry fallback 
+
+- [ ] [FE] Confirmation before save 
+
+- [ ] [FE] Validation and error handling 
+
+### **U3 - Food Detail** 
+
+- [ ] [FE] Food image/icon 
+
+- [ ] [FE] Food name 
+
+- [ ] [FE] Quantity + unit 
+
+- [ ] [FE] Freshness percentage 
+
+- [ ] [FE] Freshness status 
+
+- [ ] [FE] Estimated remaining time 
+
+- [ ] [FE] Storage location 
+
+- [ ] [FE] Opened status 
+
+- [ ] [FE] Mark Consumed 
+
+- [ ] [FE] Mark Opened 
+
+- [ ] [FE] Move to Freezer 
+
+- [ ] [FE] Discard 
+
+- [ ] [FE] Edit item 
+
+## **Phase 5 - Food actions & lifecycle** 
+
+**Fast actions** 
+
+- [ ] [FE] One-tap Consumed 
+
+- [ ] [FE] One-tap Froze It 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] [FE] One-tap Discarded 
+
+- [ ] [BE] Endpoint/action for Consumed 
+
+- [ ] [BE] Endpoint/action for Frozen 
+
+- [ ] [BE] Endpoint/action for Discarded 
+
+- [ ] [QA] Test all state transitions 
+
+### **Opened vs Unopened** 
+
+- [ ] [FE] Quick “Mark as Opened” action 
+
+- [ ] [BE] Store opened_at 
+
+- [ ] [BE] Recalculate estimated freshness after opening 
+
+- [ ] [QA] Verify shorter freshness after opening 
+
+### **Move to Freezer** 
+
+- [ ] [FE] Move to Freezer control 
+
+- [ ] [BE] Update storage location 
+
+- [ ] [BE] Store frozen_at 
+
+- [ ] [BE] Recalculate freshness estimate 
+
+- [ ] [QA] Ensure old fridge expiry is not still shown 
+
+### **Partial consumption** 
+
+- [ ] [FE] “How much did you use?” prompt 
+
+- [ ] [FE] Used All option 
+
+- [ ] [FE] Used Half option 
+
+- [ ] [FE] Custom quantity option 
+
+- [ ] [BE] Deduct used amount 
+
+- [ ] [BE] Preserve remaining quantity 
+
+- [ ] [QA] Verify quantities never become invalid 
+
+### **Leftovers** 
+
+- [ ] [FE] Ask “Do you have leftovers?” 
+
+- [ ] [FE] Add leftover flow 
+
+- [ ] [BE] Create leftover FoodItem 
+
+- [ ] [BE] Reset freshness timer using leftover food rules 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+● [ ] [QA] Verify leftover item appears correctly 
+
+## **Phase 6 - Rescue My Food** 
+
+### **Rescue engine** 
+
+- [ ] [BE] Get highest-risk ingredients 
+
+- [ ] [BE] Rank ingredients using Rescue Score 
+
+- [ ] [BE] Match ingredients with possible recipes 
+
+- [ ] [BE] Prioritize recipes that rescue urgent ingredients 
+
+- [ ] [BE] Return ingredients rescued per recipe 
+
+- [ ] [BE] Return missing ingredients 
+
+- [ ] [BE] Return estimated preparation time 
+
+### **Rescue UI** 
+
+- [ ] [FE] High-risk ingredient section 
+
+- [ ] [FE] Rescue Score display 
+
+- [ ] [FE] Recommended recipe list 
+
+- [ ] [FE] Highlight rescued ingredients 
+
+- [ ] [FE] Show missing ingredients 
+
+- [ ] [FE] Show preparation time 
+
+- [ ] [FE] “Cook This” CTA 
+
+### **Cook flow** 
+
+- [ ] [FE] Cook confirmation 
+
+- [ ] [FE] Ingredient usage confirmation 
+
+- [ ] [FE] Partial-use prompt 
+
+- [ ] [FE] Leftover prompt 
+
+- [ ] [BE] Update inventory after cooking 
+
+- [ ] [QA] Test entire Rescue -> Cook -> Inventory flow 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+## **Phase 7 - Camera & food input** 
+
+### **Hackathon MVP** 
+
+- [ ] [FE] Browser camera permission 
+
+- [ ] [FE] Camera preview 
+
+- [ ] [FE] Capture image 
+
+- [ ] [FE] Manual fallback 
+
+- [ ] [FE] Confirmation/edit screen 
+
+- [ ] [QA] Test camera on mobile PWA 
+
+### **Optional if time allows** 
+
+- [ ] Barcode scanning 
+
+- [ ] OCR expiry-date recognition 
+
+- [ ] Food image recognition 
+
+- [ ] Auto-fill food name/category 
+
+These are optional because recognition must never block the basic Add Food flow. 
+
+## **Phase 8 - Dashboard & impact** 
+
+- [ ] [FE] Ingredients rescued metric 
+
+- [ ] [FE] Items at risk metric 
+
+- [ ] [FE] Meals prepared metric 
+
+- [ ] [FE] Estimated food saved 
+
+- [ ] [FE] Estimated money saved 
+
+- [ ] [BE] Aggregate impact metrics 
+
+- [ ] [QA] Check that metrics avoid fake precision 
+
+THIS WEEK 
+
+4  Ingredients Rescued ₱320  Estimated Food Saved 3  Meals Suggested 
+
+## **Phase 9 - Notifications** 
+
+### **MVP / optional depending on time** 
+
+- [ ] [BE] Identify foods requiring attention 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] [FE] Notification permission flow 
+
+- [ ] [FE] Local/PWA notification support 
+
+- [ ] [QA] Verify notification behavior 
+
+Example: “Your chicken breast and leftover rice should be used soon. Tap for a 20-minute meal suggestion.” 
+
+### **Post-MVP notification ideas** 
+
+- [ ] Dinner-time meal prompts 
+
+- [ ] Weekly food recap 
+
+- [ ] Weekend grocery reminder 
+
+- [ ] Expiring-food summary 
+
+- - [ ] Temperature sensor integration 
+
+- - [ ] Humidity sensor integration 
+
+- - [ ] Smart packaging integration 
+
+- - [ ] QR/NFC package metadata 
+
+- - [ ] Smart refrigerator integration 
+
+- - [ ] Sensor-assisted freshness recalculation 
+
+● 
+
+## **Phase 10 - Dietary preferences** 
+
+Only if MVP is already stable. 
+
+- [ ] Vegetarian preference 
+
+- [ ] Halal preference 
+
+- [ ] Gluten-free preference 
+
+- [ ] Allergy exclusions 
+
+- [ ] Equipment restrictions 
+
+- [ ] Air fryer preference 
+
+- [ ] One-pan preference 
+
+Dietary filters must affect Rescue My Food recommendations. 
+
+## **Phase 11 - PWA & responsive experience** 
+
+- [ ] [FE] Installable PWA 
+
+- [ ] [FE] Web app manifest 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] [FE] Service worker 
+
+- [ ] [FE] Mobile icons / splash assets 
+
+- [ ] [FE] Responsive fridge layout 
+
+- [ ] [FE] Camera works from installed PWA 
+
+- [ ] [QA] Test mobile installation 
+
+- [ ] [QA] Test desktop browser 
+
+- [ ] [QA] Test phone browser 
+
+- [ ] [QA] Verify HTTPS deployment 
+
+## **Phase 12 - QA & product validation** 
+
+### **Product review** 
+
+- [ ] [QA] Review full user flow 
+
+- [ ] [QA] Identify Top 5 MVP risks 
+
+- [ ] [QA] Identify confusing screens 
+
+- [ ] [QA] Identify unnecessary steps 
+
+- [ ] [QA] Review freshness assumptions 
+
+- [ ] [QA] Review Rescue Score behavior 
+
+- [ ] [QA] Review demo risks 
+
+- [ ] [QA] Prepare likely judge questions 
+
+### **Required test scenarios** 
+
+- [ ] Add food manually 
+
+- [ ] Add food to fridge 
+
+- [ ] Add food to freezer 
+
+- [ ] Move fridge item to freezer 
+
+- [ ] Mark unopened item as opened 
+
+- [ ] Partially consume an ingredient 
+
+- [ ] Fully consume an ingredient 
+
+- [ ] Discard an ingredient 
+
+- [ ] Cook using multiple ingredients 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] Create leftover after cooking 
+
+- [ ] Verify freshness recalculation 
+
+- [ ] Verify Rescue Score updates 
+
+- [ ] Verify Rescue My Food prioritization 
+
+- [ ] Verify empty fridge behavior 
+
+- [ ] Verify API error state 
+
+- [ ] Verify camera permission denied state 
+
+## **Phase 13 - Demo preparation** 
+
+### **Demo inventory** 
+
+- [ ] Chicken Breast - 500g - Fridge - Opened - Rescue Today 
+
+- [ ] Leftover Rice - 400g - Fridge - Rescue Today 
+
+- [ ] Tomatoes - 3 pcs - Fridge - Use Soon 
+
+- [ ] Milk - 700ml - Fridge - Opened - Use Soon 
+
+- [ ] Eggs - 6 pcs - Fridge - Fresh 
+
+- [ ] Beef - 500g - Freezer - Fresh 
+
+### **Required demo flow** 
+
+Open FRESHVII -> Show Visual Fridge -> Identify Rescue Today foods -> Open Rescue My Food -> Recommend meal -> Cook This -> Confirm quantity used -> Create / skip leftovers -> Inventory updates -> Show rescued-food impact 
+
+- [ ] [LEAD] Finalize demo script 
+
+- [ ] [QA] Try to break demo flow 
+
+- [ ] [FE] Ensure demo data loads reliably 
+
+- [ ] [BE] Ensure demo APIs are reliable 
+
+- [ ] [UI] Polish demo screens 
+
+- [ ] [LEAD] Prepare fallback screenshots/video if needed 
+
+## **Phase 14 - Pitch & presentation** 
+
+### **Story** 
+
+- [ ] [LEAD] Opening problem statement 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] [LEAD] Explain why static expiration tracking is insufficient 
+
+- [ ] [LEAD] Introduce FRESHVII 
+
+- [ ] [LEAD] Explain food lifecycle concept 
+
+- [ ] [LEAD] Explain Rescue Score 
+
+- [ ] [LEAD] Transition into live demo 
+
+- [ ] [LEAD] Explain impact 
+
+- [ ] [LEAD] Explain sustainability 
+
+- [ ] [LEAD] Explain technological innovation 
+
+- [ ] [LEAD] Closing statement 
+
+**Key message:** “FRESHVII doesn’t just tell you what you can cook. It tells you what you should cook today so your food doesn’t become tomorrow’s waste.” 
+
+## **Phase 15 - AppCon criteria alignment** 
+
+**Product - 35%** 
+
+**Relevance - 5%** 
+
+- [ ] Demonstrate direct connection to food expiry and food waste 
+
+#### **Impact & Value - 10%** 
+
+- [ ] Show ingredients rescued 
+
+- [ ] Show food saved 
+
+- [ ] Show estimated money saved 
+
+- [ ] Clearly explain household value 
+
+#### **UI/UX Design - 10%** 
+
+- [ ] Visual refrigerator is understandable 
+
+- [ ] Mobile-first 
+
+- [ ] Rescue My Food is prominent 
+
+- [ ] Freshness states are immediately understandable 
+
+- [ ] Main flow requires minimal steps 
+
+#### **Sustainability - 10%** 
+
+- [ ] Explain how earlier consumption reduces food waste 
+
+- [ ] Sustainability demonstrated through actual product behavior 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+### **Technology - 30%** 
+
+#### **Functionality - 15%** 
+
+- [ ] Add food 
+
+- [ ] Store food 
+
+- [ ] Freshness calculation 
+
+- [ ] Open food 
+
+- [ ] Freeze food 
+
+- [ ] Consume food 
+
+- [ ] Rescue recommendation 
+
+- [ ] Cook 
+
+- [ ] Update inventory 
+
+#### **Technological Innovation - 15%** 
+
+- [ ] Dynamic freshness estimation 
+
+- [ ] Food lifecycle state tracking 
+
+- [ ] Rescue Score 
+
+- [ ] Risk-prioritized recommendations 
+
+- [ ] Camera-enabled PWA 
+
+- [ ] Potential future sensor integration 
+
+### **Creativity - 20%** 
+
+#### **Originality - 10%** 
+
+- [ ] Position FRESHVII as a food lifecycle + rescue system, not simply an expiration tracker 
+
+#### **Creative Innovation - 10%** 
+
+- [ ] Interactive fridge 
+
+- [ ] Rescue Score 
+
+- [ ] State-aware freshness 
+
+- [ ] Rescue My Food 
+
+### **Presentation** 
+
+#### **Presentation preparation** 
+
+- [ ] [LEAD] Clear story 
+
+- [ ] [LEAD] Rehearse pitch 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] [LEAD] Rehearse transitions into demo 
+
+- [ ] [LEAD] Stay within allotted time 
+
+- [ ] [QA] Prepare judge Q&A 
+
+- [ ] [QA] Challenge unsupported claims 
+
+- [ ] [LEAD] Ensure all claims can be demonstrated or explained 
+
+## **Phase 16 - Deployment & hardening** 
+
+- [ ] [FE] Production frontend deployment 
+
+- [ ] [BE] Production backend deployment 
+
+- [ ] [BE] Configure production database 
+
+- [ ] [FE] Production environment variables 
+
+- [ ] [FE] Verify API URL 
+
+- [ ] [QA] Test deployed PWA 
+
+- [ ] [QA] Test mobile camera 
+
+- [ ] [QA] Test main flow on real phone 
+
+- [ ] [QA] Test weak/failed API responses 
+
+- [ ] [QA] Final smoke test 
+
+- [ ] [LEAD] Freeze code before judging 
+
+## **Phase 17 - Post-MVP** 
+
+Do not work on these until the core demo is stable. 
+
+- [ ] IoT refrigerator sensors 
+
+- [ ] Temperature monitoring 
+
+- [ ] Humidity monitoring 
+
+- [ ] Smarter spoilage prediction 
+
+- [ ] AI food image recognition 
+
+- [ ] OCR expiration recognition 
+
+- [ ] Grocery integration 
+
+- [ ] Shopping list generation 
+
+- [ ] Dietary/allergy profiles 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] Weekly recap 
+
+- [ ] Smart dinner notifications 
+
+- [ ] Household sharing 
+
+- [ ] Multiple refrigerators 
+
+- [ ] Food waste analytics 
+
+- [ ] Smart refrigerator manufacturer integrations 
+
+- [ ] Business / restaurant version 
+
+- [ ] Grocery inventory version 
+
+**<u>Suggested 3-Day Hackathon Schedule</u>** 
+
+|**Period**|**Focus**|**Target Outcome**|
+|---|---|---|
+|Day 1 - Early|Product + architecture|MVP locked, DTO defined, designs<br>underway|
+|Day 1 - Late|Foundation|FE/BE projects running, core UI ready|
+|Day 2 - Early|Main functionality|Add food + fridge + freshness working|
+|Day 2 - Late|Rescue flow|Rescue My Food + lifecycle actions<br>working|
+|Day 3 - Early|Integration|Full end-to-end demo working|
+|Day 3 - Mid|QA + polish|Bugs fixed, UI polished, scope frozen|
+|Day 3 - Final|Pitch + demo|Rehearsed presentation and reliable<br>demo|
+
+
+
+## **MVP Priority** 
+
+### **P0 - Must work** 
+
+- [ ] Visual fridge 
+
+- [ ] Fridge / Freezer / Pantry 
+
+- [ ] Add food 
+
+- [ ] Quantity 
+
+- [ ] Opened / unopened 
+
+- [ ] Freshness estimate 
+
+- [ ] Freshness status 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+- [ ] Move to freezer 
+
+- [ ] Mark consumed 
+
+- [ ] Rescue Score 
+
+- [ ] Rescue My Food 
+
+- [ ] Recipe recommendation 
+
+- [ ] Cook / quantity deduction 
+
+- [ ] Inventory update 
+
+- **P1 - Build if stable** 
+
+- [ ] Camera capture 
+
+- [ ] Swipe actions 
+
+- [ ] Leftover creation 
+
+- [ ] Impact dashboard 
+
+- [ ] PWA installation 
+
+- [ ] Notifications 
+
+- **P2 - Only if there is extra time** 
+
+- [ ] Barcode 
+
+- [ ] OCR 
+
+- [ ] AI food recognition 
+
+- [ ] Dietary filters 
+
+- [ ] Weekly recap 
+
+- [ ] Advanced animations 
+
+## **How to Claim Work** 
+
+1. Pick an unchecked task. 
+
+2. Confirm with the team that nobody else owns it. 
+
+3. Create a branch. 
+
+4. Mark the task [-] while in progress. 
+
+5. When merged and verified, mark [x]. 
+
+6. Send the PR to the team. 
+
+7. QA verifies the feature. 
+
+8. Only after QA verification should it be considered demo-ready. 
+
+feature/visual-fridge feature/freshness-engine 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+
+feature/rescue-flow fix/partial-consumption 
+
+## **Definition of Done** 
+
+**A task is not finished because the code exists.** 
+
+Design approved -> Implemented -> Connected to backend -> Correct data updates -> QA tested -> Works on mobile -> Works in deployed environment -> Can be demonstrated reliably 
+
+## **FRESHVII Hackathon Rule** 
+
+**Before adding another feature, ask:** Does the core demo already work from start to finish? 
+
+If no, fix the core product. If yes, ask whether the feature materially improves Product, Technology, Creativity, or Presentation scoring. If not, put it in Post-MVP. 
+
+### **Primary target: Add -> Track -> Rescue -> Cook -> Update** 
+
+FRESHVII | Seventh Stack | AppCon Hackathon 
+

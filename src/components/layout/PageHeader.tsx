@@ -1,3 +1,5 @@
+import { Link } from 'react-router'
+
 export function PageHeader() {
   return (
     <header className="border-b border-[#e5e1d5] bg-[#f8f7f2]">
@@ -5,7 +7,7 @@ export function PageHeader() {
         <span className="text-sm font-black tracking-[0.18em] text-[#426a5a]">
           FRESHVII
         </span>
-        <span className="text-sm text-stone-500">Tuesday, April 22</span>
+        <Link to="/login" className="rounded-full px-3 py-2 text-sm font-bold text-stone-500 transition-colors hover:bg-white hover:text-[#426a5a]">Sign in</Link>
       </div>
     </header>
   )
