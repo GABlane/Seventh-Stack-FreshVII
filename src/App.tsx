@@ -7,10 +7,8 @@ import { FoodDetailPage } from './pages/FoodDetailPage'
 import { HomePage } from './pages/HomePage'
 import { RecipesPage } from './pages/RecipesPage'
 import { RescuePage } from './pages/RescuePage'
-import { FoodServiceTestPage } from './pages/dev/FoodServiceTestPage'
 
 const router = createBrowserRouter([
-  { path: 'dev/food-test', element: <FoodServiceTestPage /> },
   { index: true, element: <AuthPage /> },
   { path: 'login', element: <AuthPage /> },
   {
