@@ -11,8 +11,10 @@ import { NotificationsPage } from './pages/NotificationsPage'
 import { RecipesPage } from './pages/RecipesPage'
 import { RecipeDetailPage } from './pages/RecipeDetailPage'
 import { RescuePage } from './pages/RescuePage'
+import { FoodServiceTestPage } from './pages/dev/FoodServiceTestPage'
 
 const router = createBrowserRouter([
+  { path: 'dev/food-test', element: <FoodServiceTestPage /> },
   { index: true, element: <AuthPage /> },
   { path: 'login', element: <AuthPage /> },
   {

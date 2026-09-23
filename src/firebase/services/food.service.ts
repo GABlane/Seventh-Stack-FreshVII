@@ -1,174 +1,258 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, updateDoc } from 'firebase/firestore'
-import { auth, db } from '../config'
-import { calculateFreshness, calculateRescueScore } from '../../domain/freshness'
-import type { FoodItem, StorageLocation } from '../../data/mockData'
+import {
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  onSnapshot,
+  writeBatch,
+  serverTimestamp,
+  query,
+  where,
+  Timestamp,
+  type Unsubscribe,
+  type QuerySnapshot,
+  type DocumentData,
+} from 'firebase/firestore'
+import { db } from '../config'
+import {
+  createFoodItem,
+  openFood,
+  freezeFood,
+  unfreezeFood,
+  consumeFood,
+  discardFood,
+  createLeftover,
+  type FoodItemRecord,
+  type FoodEvent,
+  type FoodStatus,
+} from '../../domain/food'
+import type { StorageLocation } from '../../data/mockData'
 
-export type ImpactEvent = {
-  id: string
-  type: 'ingredient-rescued' | 'leftover-created' | 'meal-prepared' | 'product-added' | 'food-consumed' | 'moved-to-freezer' | 'food-opened'
-  quantity: number
-  label?: string
-  createdAt: string
+// ---------------------------------------------------------------------------
+// Path helpers
+// ---------------------------------------------------------------------------
+
+const itemsCol = (uid: string) =>
+  collection(db, `profiles/${uid}/items`)
+
+const itemDoc = (uid: string, itemId: string) =>
+  doc(db, `profiles/${uid}/items/${itemId}`)
+
+const activityDoc = (uid: string, eventId: string) =>
+  doc(db, `profiles/${uid}/activity/${eventId}`)
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+function toIso(value: unknown): string {
+  if (value instanceof Timestamp) return value.toDate().toISOString()
+  if (typeof value === 'string') return value
+  if (value instanceof Date) return value.toISOString()
+  throw new Error(`Cannot convert Firestore value to ISO string: ${String(value)}`)
 }
 
-export type FoodDraft = {
-  name: string
-  category: string
-  quantity: number
-  unit: string
-  location: StorageLocation
-  dateAdded: string
-  opened: boolean
-  openedDate?: string
-  estimatedExpiry?: string
-  shelf: string
-  accent: string
+function stripUndefined<T extends object>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined),
+  ) as Partial<T>
 }
 
-function requireUser() {
-  const user = auth.currentUser
-  if (!user || !db) throw new Error('You must be signed in to manage food.')
-  return { user, db }
-}
-
-function asDate(value: unknown): Date | undefined {
-  if (value instanceof Timestamp) return value.toDate()
-  if (typeof value === 'string' || value instanceof Date) {
-    const date = new Date(value)
-    return Number.isNaN(date.getTime()) ? undefined : date
-  }
-  return undefined
-}
-
-function toIso(value: unknown, fallback: string): string {
-  return asDate(value)?.toISOString() ?? fallback
-}
-
-function mapFoodItem(id: string, data: Record<string, unknown>): FoodItem {
-  const dateAdded = toIso(data.dateAdded, new Date().toISOString())
-  const openedDate = asDate(data.openedDate)?.toISOString()
-  const frozenDate = asDate(data.frozenDate)?.toISOString()
-  const location = (data.location as StorageLocation | undefined) ?? 'fridge'
-  const quantity = typeof data.quantity === 'number' ? data.quantity : 0
-  const freshness = calculateFreshness({ category: String(data.category ?? 'Pantry'), quantity, location, dateAdded, openedDate, frozenDate, estimatedExpiry: asDate(data.estimatedExpiry) }, new Date())
-  const rescue = calculateRescueScore({ category: String(data.category ?? 'Pantry'), quantity, location, dateAdded, openedDate, frozenDate, estimatedExpiry: freshness.estimatedExpiry }, new Date())
-
+function docToRecord(data: DocumentData): FoodItemRecord {
   return {
-    id,
-    name: String(data.name ?? 'Unnamed food'),
-    category: String(data.category ?? 'Pantry'),
-    quantity,
-    unit: String(data.unit ?? 'piece'),
-    location,
-    shelf: String(data.shelf ?? 'Middle shelf'),
-    opened: data.opened === true,
-    dateAdded,
-    openedDate,
-    frozenDate,
-    freshness: freshness.freshness,
-    freshnessPercentage: freshness.freshnessPercentage,
-    expires: freshness.expiresLabel,
-    rescueScore: rescue.score,
-    rescueReasons: rescue.reasons,
-    accent: String(data.accent ?? '#dce9de'),
-  }
+    ...data,
+    createdAt: toIso(data.createdAt),
+    updatedAt: toIso(data.updatedAt),
+  } as FoodItemRecord
 }
 
-export function subscribeFoodItems(onChange: (items: FoodItem[]) => void, onError: (error: Error) => void): () => void {
-  const { user, db: firestore } = requireUser()
-  const itemsQuery = query(collection(firestore, 'users', user.uid, 'foodItems'), orderBy('createdAt', 'desc'))
-  return onSnapshot(itemsQuery, (snapshot) => onChange(snapshot.docs.map((document) => mapFoodItem(document.id, document.data()))), onError)
+async function logEvent(uid: string, event: FoodEvent): Promise<void> {
+  await setDoc(activityDoc(uid, event.id), { ...event })
 }
 
-export function subscribeImpactEvents(onChange: (events: ImpactEvent[]) => void, onError: (error: Error) => void): () => void {
-  const { user, db: firestore } = requireUser()
-  const eventsQuery = query(collection(firestore, 'users', user.uid, 'impactEvents'), orderBy('createdAt', 'desc'))
-  return onSnapshot(eventsQuery, (snapshot) => onChange(snapshot.docs.map((document) => {
-    const data = document.data()
-    return { id: document.id, type: String(data.type) as ImpactEvent['type'], quantity: typeof data.quantity === 'number' ? data.quantity : 0, label: typeof data.label === 'string' ? data.label : undefined, createdAt: toIso(data.createdAt, new Date().toISOString()) }
-  })), onError)
-}
+// ---------------------------------------------------------------------------
+// Create
+// ---------------------------------------------------------------------------
 
-async function recordImpactEvent(type: ImpactEvent['type'], quantity: number, label?: string): Promise<void> {
-  const { user, db: firestore } = requireUser()
-  await addDoc(collection(firestore, 'users', user.uid, 'impactEvents'), { type, quantity, label: label ?? null, createdAt: serverTimestamp() })
-}
+export async function addItem(
+  uid: string,
+  input: Omit<FoodItemRecord, 'status' | 'createdAt' | 'updatedAt'> & { addedAt?: Date | string },
+): Promise<FoodItemRecord> {
+  const { item, event } = createFoodItem(input)
 
-export async function addFoodItem(draft: FoodDraft): Promise<string> {
-  const { user, db: firestore } = requireUser()
-  const quantity = Number(draft.quantity)
-  if (!Number.isFinite(quantity) || quantity <= 0) throw new Error('Quantity must be greater than zero.')
-  if (['piece', 'bag'].includes(draft.unit) && !Number.isInteger(quantity)) throw new Error(`${draft.unit} quantities must be whole numbers.`)
-  const item = {
-    ...draft,
-    quantity,
-    dateAdded: Timestamp.fromDate(new Date(draft.dateAdded)),
-    openedDate: draft.openedDate ? Timestamp.fromDate(new Date(draft.openedDate)) : null,
-    estimatedExpiry: draft.estimatedExpiry ? Timestamp.fromDate(new Date(draft.estimatedExpiry)) : null,
-    status: 'active',
+  await setDoc(itemDoc(uid, item.id), {
+    ...stripUndefined(item),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+  })
+
+  await logEvent(uid, event)
+  return item
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle updates
+// ---------------------------------------------------------------------------
+
+export async function markOpened(
+  uid: string,
+  item: FoodItemRecord,
+  at: Date | string = new Date(),
+): Promise<FoodItemRecord> {
+  const { item: updated, event } = openFood(item, at)
+
+  await updateDoc(itemDoc(uid, item.id), {
+    opened: updated.opened,
+    openedDate: updated.openedDate ?? null,
+    estimatedExpiry: updated.estimatedExpiry ?? null,
+    updatedAt: updated.updatedAt,
+  })
+
+  await logEvent(uid, event)
+  return updated
+}
+
+export async function moveToFreezer(
+  uid: string,
+  item: FoodItemRecord,
+  at: Date | string = new Date(),
+): Promise<FoodItemRecord> {
+  const { item: updated, event } = freezeFood(item, at)
+
+  await updateDoc(itemDoc(uid, item.id), {
+    storageLocation: updated.storageLocation,
+    frozenDate: updated.frozenDate,
+    estimatedExpiry: updated.estimatedExpiry ?? null,
+    updatedAt: updated.updatedAt,
+  })
+
+  await logEvent(uid, event)
+  return updated
+}
+
+export async function unfreezeItem(
+  uid: string,
+  item: FoodItemRecord,
+  location: Exclude<StorageLocation, 'freezer'> = 'fridge',
+  at: Date | string = new Date(),
+): Promise<FoodItemRecord> {
+  const { item: updated, event } = unfreezeFood(item, at, location)
+
+  await updateDoc(itemDoc(uid, item.id), {
+    storageLocation: updated.storageLocation,
+    frozenDate: updated.frozenDate ?? null,
+    estimatedExpiry: updated.estimatedExpiry ?? null,
+    updatedAt: updated.updatedAt,
+  })
+
+  await logEvent(uid, event)
+  return updated
+}
+
+export async function consumeItem(
+  uid: string,
+  item: FoodItemRecord,
+  quantityUsed: number,
+  at: Date | string = new Date(),
+): Promise<FoodItemRecord> {
+  const { item: updated, event } = consumeFood(item, quantityUsed, at)
+
+  await updateDoc(itemDoc(uid, item.id), {
+    quantity: updated.quantity,
+    status: updated.status,
+    updatedAt: updated.updatedAt,
+    ...(updated.archivedAt ? { archivedAt: updated.archivedAt } : {}),
+  })
+
+  await logEvent(uid, event)
+  return updated
+}
+
+export async function discardItem(
+  uid: string,
+  item: FoodItemRecord,
+  at: Date | string = new Date(),
+): Promise<FoodItemRecord> {
+  const { item: updated, event } = discardFood(item, at)
+
+  await updateDoc(itemDoc(uid, item.id), {
+    status: updated.status,
+    updatedAt: updated.updatedAt,
+    archivedAt: updated.archivedAt,
+  })
+
+  await logEvent(uid, event)
+  return updated
+}
+
+// ---------------------------------------------------------------------------
+// Leftover (atomic batch)
+// ---------------------------------------------------------------------------
+
+export async function createLeftoverItem(
+  uid: string,
+  item: FoodItemRecord,
+  quantity: number,
+  at: Date | string = new Date(),
+): Promise<{ original: FoodItemRecord; leftover: FoodItemRecord }> {
+  const { item: original, event, leftover, leftoverEvent } = createLeftover(item, quantity, at)
+
+  if (!leftover || !leftoverEvent) {
+    throw new Error('createLeftover did not return leftover item and event')
   }
-  const document = await addDoc(collection(firestore, 'users', user.uid, 'foodItems'), item)
-  await recordImpactEvent('product-added', quantity, draft.name)
-  return document.id
-}
 
-export async function markFoodOpened(foodId: string): Promise<void> {
-  const { user, db: firestore } = requireUser()
-  const openedAt = Timestamp.fromDate(new Date())
-  await updateDoc(doc(firestore, 'users', user.uid, 'foodItems', foodId), { opened: true, openedDate: openedAt, updatedAt: serverTimestamp() })
-  await recordImpactEvent('food-opened', 1, foodId)
-}
+  const batch = writeBatch(db)
 
-export async function freezeFoodItem(foodId: string, foodName?: string): Promise<void> {
-  const { user, db: firestore } = requireUser()
-  const frozenAt = Timestamp.fromDate(new Date())
-  await updateDoc(doc(firestore, 'users', user.uid, 'foodItems', foodId), { location: 'freezer', shelf: 'Drawer 1', frozenDate: frozenAt, updatedAt: serverTimestamp() })
-  await recordImpactEvent('moved-to-freezer', 1, foodName ?? foodId)
-}
-
-export async function consumeFoodItem(foodId: string, quantityUsed: number, currentQuantity: number): Promise<void> {
-  const { user, db: firestore } = requireUser()
-  if (!Number.isFinite(quantityUsed) || quantityUsed <= 0 || quantityUsed > currentQuantity) throw new Error('Enter a valid amount to use.')
-  const remaining = Number((currentQuantity - quantityUsed).toFixed(2))
-  await updateDoc(doc(firestore, 'users', user.uid, 'foodItems', foodId), { quantity: remaining, status: remaining === 0 ? 'consumed' : 'active', updatedAt: serverTimestamp() })
-  await recordImpactEvent('ingredient-rescued', quantityUsed)
-  await recordImpactEvent('food-consumed', quantityUsed, foodId)
-}
-
-export async function discardFoodItem(foodId: string): Promise<void> {
-  const { user, db: firestore } = requireUser()
-  await deleteDoc(doc(firestore, 'users', user.uid, 'foodItems', foodId))
-}
-
-export async function createLeftoverItem(source: FoodItem, quantity: number): Promise<string> {
-  const { user, db: firestore } = requireUser()
-  if (!Number.isFinite(quantity) || quantity <= 0) throw new Error('Leftover quantity must be greater than zero.')
-  const now = new Date()
-  const item = {
-    name: `${source.name} leftovers`,
-    category: source.category,
-    quantity,
-    unit: source.unit,
-    location: 'fridge' as const,
-    shelf: 'Middle shelf',
-    opened: true,
-    dateAdded: Timestamp.fromDate(now),
-    openedDate: Timestamp.fromDate(now),
-    frozenDate: null,
-    estimatedExpiry: null,
-    accent: source.accent,
-    status: 'active',
+  // New leftover document
+  batch.set(itemDoc(uid, leftover.id), {
+    ...stripUndefined(leftover),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-    sourceFoodId: source.id,
-  }
-  const document = await addDoc(collection(firestore, 'users', user.uid, 'foodItems'), item)
-  await recordImpactEvent('leftover-created', quantity, source.name)
-  return document.id
+  })
+
+  // Leftover 'added' activity event
+  batch.set(activityDoc(uid, leftoverEvent.id), { ...leftoverEvent })
+
+  // Original item — touch updatedAt to reflect the leftover-created event
+  batch.update(itemDoc(uid, original.id), {
+    updatedAt: original.updatedAt,
+  })
+
+  // Original 'leftover-created' activity event
+  batch.set(activityDoc(uid, event.id), { ...event })
+
+  await batch.commit()
+
+  return { original, leftover }
 }
 
-export async function recordMealPrepared(label?: string): Promise<void> {
-  await recordImpactEvent('meal-prepared', 1, label)
+// ---------------------------------------------------------------------------
+// Reads
+// ---------------------------------------------------------------------------
+
+export function subscribeToItems(
+  uid: string,
+  callback: (items: FoodItemRecord[]) => void,
+): Unsubscribe {
+  const q = query(itemsCol(uid))
+
+  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+    const items = snapshot.docs.map((d) => docToRecord(d.data()))
+    callback(items)
+  })
+}
+
+export async function fetchItems(
+  uid: string,
+  filterStatus: FoodStatus | 'all' = 'active',
+): Promise<FoodItemRecord[]> {
+  const col = itemsCol(uid)
+  const q =
+    filterStatus === 'all'
+      ? query(col)
+      : query(col, where('status', '==', filterStatus))
+
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((d) => docToRecord(d.data()))
 }

@@ -1,0 +1,14 @@
+recipe_id,subcategory_id,name,qty,unit
+chicken-fried-rice,chicken,Chicken Breast,300,g
+chicken-fried-rice,rice,Leftover Rice,400,g
+chicken-fried-rice,eggs,Egg,2,pcs
+tomato-egg-scramble,vegetables,Tomatoes,2,pcs
+tomato-egg-scramble,eggs,Eggs,3,pcs
+chicken-adobo,chicken,Chicken Breast,500,g
+chicken-adobo,condiments,Soy Sauce,3,tbsp
+chicken-adobo,condiments,Vinegar,2,tbsp
+beef-stir-fry,beef,Beef,500,g
+beef-stir-fry,vegetables,Mixed Vegetables,200,g
+green-frittata,eggs,Eggs,4,pcs
+green-frittata,leafy-greens,Baby Spinach,1,bag
+green-frittata,dairy,Greek Yogurt,1,tub

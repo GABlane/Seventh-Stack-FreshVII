@@ -14,6 +14,7 @@ export type FoodItemRecord = {
   id: string
   name: string
   category: FoodCategory
+  subcategory_id?: string
   quantity: number
   unit: MeasurementUnit
   storageLocation: StorageLocation

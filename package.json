@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:ref": "tsx scripts/seed/seed-reference-data.ts",
+    "seed:demo": "tsx scripts/seed/seed-demo-data.ts",
+    "seed:reset": "tsx scripts/seed/seed-demo-data.ts --reset",
+    "seed:all": "tsx scripts/seed/run-all.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -29,11 +33,13 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "csv-parse": "^7.0.2",
     "eslint": "^10.10.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.6",
     "globals": "^17.12.0",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.69.0",
     "vite": "^8.3.0",
