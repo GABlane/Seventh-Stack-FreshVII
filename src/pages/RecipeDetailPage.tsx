@@ -1,0 +1,24 @@
+import { ArrowLeft, ChefHat, Clock3, Sparkles } from 'lucide-react'
+import { Link, useParams } from 'react-router'
+import { recipes } from '../data/mockData'
+import { useFoodItems } from '../hooks/useFoodItems'
+
+const stepsByRecipe: Record<string, string[]> = {
+  'green-frittata': ['Whisk the eggs with yogurt and herbs.', 'Fold in the spinach and warm it in an oven-safe pan.', 'Top with Parmesan and cook until just set.'],
+  'berry-yogurt': ['Spoon yogurt into a bowl and layer in the berries.', 'Add granola and a drizzle of honey.', 'Serve chilled while the berries are fresh.'],
+  'chicken-rice': ['Season the chicken and cook until golden and done.', 'Warm the rice with lime and fresh herbs.', 'Build the bowl with greens and serve hot.'],
+}
+
+type RecipeDetailProps = { id: string; title: string; description: string; time: number; ingredients: string[]; rescue: string }
+
+export function RecipeDetailPage() {
+  const { recipeId } = useParams()
+  const { items } = useFoodItems()
+  const recipe = recipes.find((entry) => entry.id === recipeId) as RecipeDetailProps | undefined
+  if (!recipe) return <div className="w-full max-w-3xl space-y-4"><h1 className="text-3xl font-black text-[#173d4e]">Recipe not found</h1><Link to="/app/recipes" className="inline-flex items-center gap-2 font-bold text-[#087c91]"><ArrowLeft size={16} /> Back to recipes</Link></div>
+  const availableNames = items.filter((item) => item.quantity > 0).map((item) => item.name.toLowerCase())
+  const rescued = recipe.ingredients.filter((ingredient) => availableNames.some((name) => name.includes(ingredient.toLowerCase()) || ingredient.toLowerCase().includes(name)))
+  const recipeSteps = stepsByRecipe[recipe.id] ?? ['Prepare the ingredients from your kitchen.', 'Cook everything together until ready.', 'Taste, plate, and enjoy.']
+
+  return <div className="-mx-5 -my-8 min-h-full w-[calc(100%+2.5rem)] space-y-5 bg-[#eefafd] px-5 py-6 pb-8 sm:-mx-8 sm:-my-12 sm:w-[calc(100%+4rem)] sm:px-8 sm:py-8"><Link to="/app/recipes" className="inline-flex items-center gap-2 text-sm font-bold text-[#173d4e]"><ArrowLeft size={17} /> Back to recipes</Link><section className="overflow-hidden rounded-[1.5rem] border border-[#cde6ed] bg-white"><div className="flex h-56 items-center justify-center bg-[#e8f7fa] text-[#4f8ca3] sm:h-72"><ChefHat size={115} strokeWidth={1.1} /></div><div className="p-5 sm:p-8"><div className="flex flex-wrap gap-2"><span className="rounded-full bg-[#d9eef3] px-3 py-1.5 text-xs font-black text-[#145d72]"><Clock3 size={13} className="mr-1 inline" /> {recipe.time} min</span><span className="rounded-full bg-[#d9eef3] px-3 py-1.5 text-xs font-black text-[#145d72]"><Sparkles size={13} className="mr-1 inline" /> {recipe.rescue}</span></div><h1 className="mt-4 text-3xl font-black text-[#173d4e] sm:text-5xl">{recipe.title}</h1><p className="mt-3 text-sm leading-6 text-[#6f8b95] sm:text-base">{recipe.description}</p><div className="mt-5 rounded-xl bg-[#d9eef3] px-4 py-3 text-sm font-bold text-[#145d72]">Rescues {rescued.length} kitchen item{rescued.length === 1 ? '' : 's'} that need attention</div></div></section><section className="space-y-3"><h2 className="text-lg font-black text-[#173d4e]">From your kitchen</h2>{recipe.ingredients.map((ingredient) => { const item = items.find((entry) => entry.name.toLowerCase().includes(ingredient.toLowerCase()) || ingredient.toLowerCase().includes(entry.name.toLowerCase())); return <div key={ingredient} className="flex items-center justify-between rounded-2xl border border-[#cde6ed] bg-white p-4"><div><p className="font-bold text-[#173d4e]">{ingredient}</p><p className="text-xs text-[#6f8b95]">{item ? `${item.quantity} ${item.unit} available` : 'Not tracked in your kitchen'}</p></div><span className={`rounded-full px-3 py-1 text-xs font-bold ${item ? 'bg-[#d9eef3] text-[#145d72]' : 'bg-[#f2f7f8] text-[#6f8b95]'}`}>{item ? 'In kitchen' : 'Missing'}</span></div> })}</section><section><h2 className="text-lg font-black text-[#173d4e]">Pantry basics</h2><p className="mt-2 text-sm text-[#6f8b95]">Salt, pepper, oil, and water are not tracked in your inventory.</p></section><section><h2 className="text-lg font-black text-[#173d4e]">Steps</h2><div className="mt-3 space-y-3">{recipeSteps.map((step, index) => <div key={step} className="flex items-start gap-3"><span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#20bed0] text-xs font-black text-[#063e4d]">{index + 1}</span><p className="pt-1 text-sm leading-5 text-[#477d8d]">{step}</p></div>)}</div></section><Link to={`/app/consumption?recipe=${encodeURIComponent(recipe.title)}`} className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#20bed0] font-black text-[#063e4d] hover:bg-[#0db3c8]"><ChefHat size={18} /> Cook This</Link><p className="text-center text-xs text-[#6f8b95]">You will confirm how much of each ingredient you used.</p></div>
+}

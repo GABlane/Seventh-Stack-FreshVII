@@ -56,62 +56,62 @@ export function AddFoodPage() {
 
   return (
     <div className="w-full max-w-3xl space-y-8">
-      <Link to="/app" className="inline-flex items-center gap-2 text-sm font-bold text-[#426a5a]"><ArrowLeft size={16} /> Back to kitchen</Link>
+      <Link to="/app" className="inline-flex items-center gap-2 text-sm font-bold text-[#145d72]"><ArrowLeft size={16} /> Back to kitchen</Link>
       <div>
-        <p className="text-sm font-bold uppercase tracking-[0.14em] text-[#426a5a]">New inventory</p>
-        <h1 className="mt-2 text-4xl font-black tracking-tight">Add food</h1>
-        <p className="mt-3 max-w-xl text-stone-600">Add an item to your kitchen. FRESHVII will estimate when it needs attention.</p>
+        <p className="text-sm font-bold uppercase tracking-[0.14em] text-[#4f8ca3]">New inventory</p>
+        <h1 className="mt-2 text-4xl font-black tracking-tight text-[#14384a]">Add food</h1>
+        <p className="mt-3 max-w-xl text-[#477d8d]">Add an item to your kitchen. FRESHVII will estimate when it needs attention.</p>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-[2rem] border border-[#e5e1d5] bg-white p-5 shadow-[0_8px_24px_rgba(70,67,52,0.05)] sm:p-8">
-        <div className="flex flex-col justify-between gap-3 rounded-2xl bg-[#f6f1e5] p-4 sm:flex-row sm:items-center">
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-[2rem] border border-[#cde6ed] bg-white p-5 shadow-[0_8px_24px_rgba(31,78,93,0.06)] sm:p-8">
+        <div className="flex flex-col justify-between gap-3 rounded-2xl bg-[#e8f7fa] p-4 sm:flex-row sm:items-center">
           <div>
             <p className="font-bold">Scan a label</p>
-            <p className="text-sm text-stone-500">Camera support can be added without blocking manual entry.</p>
+            <p className="text-sm text-[#6f8b95]">Camera support can be added without blocking manual entry.</p>
           </div>
           <Button type="button" variant="outline"><Camera size={17} /> Scan item</Button>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="sm:col-span-2">
             <span className="mb-2 block text-sm font-bold">Food name</span>
-            <input required value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Avocado" className="h-12 w-full rounded-xl border border-[#d8d1c0] px-4 outline-none focus:border-[#426a5a]" />
+            <input required value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Avocado" className="h-12 w-full rounded-xl border border-[#b8d7de] px-4 outline-none focus:border-[#20bed0]" />
           </label>
           <label>
             <span className="mb-2 block text-sm font-bold">Category</span>
-            <select value={category} onChange={(event) => setCategory(event.target.value)} className="h-12 w-full rounded-xl border border-[#d8d1c0] bg-white px-4 outline-none focus:border-[#426a5a]">
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="h-12 w-full rounded-xl border border-[#b8d7de] bg-white px-4 outline-none focus:border-[#20bed0]">
               <option>Produce</option><option>Dairy & eggs</option><option>Meat</option><option>Grains</option><option>Pantry</option>
             </select>
           </label>
           <label>
             <span className="mb-2 block text-sm font-bold">Quantity</span>
-            <input required type="number" min="0.01" step="0.1" value={quantity} onChange={(event) => setQuantity(event.target.value)} className="h-12 w-full rounded-xl border border-[#d8d1c0] px-4 outline-none focus:border-[#426a5a]" />
+            <input required type="number" min="0.01" step="0.1" value={quantity} onChange={(event) => setQuantity(event.target.value)} className="h-12 w-full rounded-xl border border-[#b8d7de] px-4 outline-none focus:border-[#20bed0]" />
           </label>
           <label>
             <span className="mb-2 block text-sm font-bold">Unit</span>
-            <select value={unit} onChange={(event) => setUnit(event.target.value)} className="h-12 w-full rounded-xl border border-[#d8d1c0] bg-white px-4 outline-none focus:border-[#426a5a]">
+            <select value={unit} onChange={(event) => setUnit(event.target.value)} className="h-12 w-full rounded-xl border border-[#b8d7de] bg-white px-4 outline-none focus:border-[#20bed0]">
               <option>piece</option><option>bag</option><option>g</option><option>ml</option><option>pack</option>
             </select>
           </label>
           <label>
             <span className="mb-2 block text-sm font-bold">Storage location</span>
-            <select value={location} onChange={(event) => setLocation(event.target.value as StorageLocation)} className="h-12 w-full rounded-xl border border-[#d8d1c0] bg-white px-4 outline-none focus:border-[#426a5a]">
+            <select value={location} onChange={(event) => setLocation(event.target.value as StorageLocation)} className="h-12 w-full rounded-xl border border-[#b8d7de] bg-white px-4 outline-none focus:border-[#20bed0]">
               <option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="pantry">Pantry</option>
             </select>
           </label>
           <label>
             <span className="mb-2 block text-sm font-bold">Date added</span>
-            <input required type="date" value={dateAdded} onChange={(event) => setDateAdded(event.target.value)} className="h-12 w-full rounded-xl border border-[#d8d1c0] px-4 outline-none focus:border-[#426a5a]" />
+            <input required type="date" value={dateAdded} onChange={(event) => setDateAdded(event.target.value)} className="h-12 w-full rounded-xl border border-[#b8d7de] px-4 outline-none focus:border-[#20bed0]" />
           </label>
         </div>
-        <label className="flex items-center gap-3 rounded-xl border border-[#e5e1d5] p-4">
-          <input type="checkbox" checked={opened} onChange={(event) => setOpened(event.target.checked)} className="size-5 accent-[#426a5a]" />
-          <span><strong className="block">Already opened</strong><small className="text-stone-500">Use a shorter freshness estimate for this item.</small></span>
+        <label className="flex items-center gap-3 rounded-xl border border-[#cde6ed] p-4">
+          <input type="checkbox" checked={opened} onChange={(event) => setOpened(event.target.checked)} className="size-5 accent-[#20bed0]" />
+          <span><strong className="block text-[#173d4e]">Already opened</strong><small className="text-[#6f8b95]">Use a shorter freshness estimate for this item.</small></span>
         </label>
-        {error && <p role="alert" className="rounded-xl bg-[#f9ddd9] px-4 py-3 text-sm text-[#7c3733]">{error}</p>}
-        <Button type="submit" disabled={isSaving} className="h-12 w-full bg-[#426a5a] text-base text-white hover:bg-[#355747]">
+        {error && <p role="alert" className="rounded-xl bg-[#fff0ef] px-4 py-3 text-sm text-[#ad4147]">{error}</p>}
+        <Button type="submit" disabled={isSaving} className="h-12 w-full bg-[#20bed0] text-base text-[#063e4d] hover:bg-[#0db3c8]">
           <Plus size={18} /> {isSaving ? 'Adding...' : 'Add to my kitchen'}
         </Button>
       </form>
-      <p className="flex items-center gap-2 text-sm text-stone-500"><Check size={16} className="text-[#7fb685]" /> Added food will appear in your live visual fridge.</p>
+      <p className="flex items-center gap-2 text-sm text-[#6f8b95]"><Check size={16} className="text-[#20bed0]" /> Added food will appear in your live visual fridge.</p>
     </div>
   )
 }

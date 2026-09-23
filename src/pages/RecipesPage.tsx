@@ -1,4 +1,5 @@
-import { ChefHat } from 'lucide-react'
+import { Clock3, SlidersHorizontal } from 'lucide-react'
+import { Link } from 'react-router'
 import { RecipeCard } from '../components/recipes/RecipeCard'
 import { recipes } from '../data/mockData'
 import { useFoodItems } from '../hooks/useFoodItems'
@@ -6,11 +7,8 @@ import { useFoodItems } from '../hooks/useFoodItems'
 export function RecipesPage() {
   const { items, isLoading, error } = useFoodItems()
   const availableNames = items.filter((item) => item.quantity > 0).map((item) => item.name.toLowerCase())
-  const recommendations = recipes.map((recipe) => {
-    const rescuedIngredients = recipe.ingredients.filter((ingredient) => availableNames.some((name) => name.includes(ingredient.toLowerCase()) || ingredient.toLowerCase().includes(name)))
-    const match = Math.round((rescuedIngredients.length / recipe.ingredients.length) * 100)
-    return { ...recipe, match, rescue: rescuedIngredients.length ? `Uses ${rescuedIngredients.join(', ')}` : 'Add ingredients to start this recipe' }
-  }).sort((a, b) => b.match - a.match)
+  const recommendations = recipes.map((recipe) => { const rescuedIngredients = recipe.ingredients.filter((ingredient) => availableNames.some((name) => name.includes(ingredient.toLowerCase()) || ingredient.toLowerCase().includes(name))); return { ...recipe, match: Math.round((rescuedIngredients.length / recipe.ingredients.length) * 100), rescuedIngredients, rescue: rescuedIngredients.length ? `Rescues ${rescuedIngredients.join(', ')}` : 'Add ingredients to start this recipe' } }).sort((a, b) => b.match - a.match)
+  const topRecipe = recommendations[0]
 
-  return <div className="w-full max-w-5xl space-y-8"><div><p className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-[#426a5a]"><ChefHat size={16} /> From your kitchen</p><h1 className="mt-2 text-4xl font-black tracking-tight">Recipes worth rescuing for</h1><p className="mt-3 max-w-xl text-stone-600">Recommendations now reflect what is actually available in your inventory.</p></div>{error && <p role="alert" className="rounded-2xl bg-[#f9ddd9] p-4 text-sm text-[#7c3733]">{error}</p>}{isLoading ? <div className="rounded-3xl border border-[#e5e1d5] bg-white p-10 text-center text-stone-500">Finding recipes for your kitchen...</div> : <div className="grid gap-5 lg:grid-cols-3">{recommendations.map((recipe) => <RecipeCard key={recipe.id} recipe={recipe} />)}</div>}</div>
+  return <div className="-mx-5 -my-8 min-h-full w-[calc(100%+2.5rem)] space-y-5 bg-[#eefafd] px-5 py-6 pb-8 sm:-mx-8 sm:-my-12 sm:w-[calc(100%+4rem)] sm:space-y-6 sm:px-8 sm:py-8"><header className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold text-[#4f8ca3]">From your kitchen</p><h1 className="mt-1 text-[2rem] font-black leading-none tracking-[-0.04em] text-[#14384a]">Recipes</h1><p className="mt-2 text-sm font-semibold text-[#477d8d]">Ranked by what needs using first</p></div><button type="button" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#b9dce7] bg-[#f0fafb] px-3 text-xs font-bold text-[#145d72]"><SlidersHorizontal size={15} /> Filters</button></header>{topRecipe && <section className="rounded-[1.25rem] border border-[#20bed0] bg-[#d9f5f8] p-4"><div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-[#145d72]"><Clock3 size={14} /> 4:30 PM · Dinner planning</div><p className="mt-2 text-sm font-black leading-5 text-[#173d4e]">Your {topRecipe.title.toLowerCase()} uses what needs attention first.</p><p className="mt-1 text-xs font-semibold text-[#477d8d]">Here is a {topRecipe.time}-minute recipe matched to your kitchen.</p><Link to={`/app/recipes/${topRecipe.id}`} className="mt-3 inline-flex h-9 items-center rounded-xl border border-[#20bed0] bg-white px-3 text-xs font-black text-[#145d72]">View recipe</Link></section>}{error && <p role="alert" className="rounded-2xl bg-[#fff0ef] p-4 text-sm text-[#ad4147]">{error}</p>}{isLoading ? <div className="rounded-3xl border border-[#cde6ed] bg-white p-10 text-center text-[#5e7f8b]">Finding recipes for your kitchen...</div> : <div className="grid gap-4 sm:grid-cols-2">{recommendations.map((recipe) => <RecipeCard key={recipe.id} recipe={recipe} compact />)}</div>}</div>
 }

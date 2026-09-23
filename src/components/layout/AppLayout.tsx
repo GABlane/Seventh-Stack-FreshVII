@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router'
-import { ChefHat, Home, Plus, Salad, Sparkles } from 'lucide-react'
+import { BarChart3, ChefHat, Home, Plus, Sparkles } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 import { FoodProvider } from '../../context/FoodContext'
 
@@ -8,7 +8,7 @@ const navigation = [
   { label: 'Rescue', to: '/app/rescue', icon: Sparkles },
   { label: 'Add food', to: '/app/add-food', icon: Plus },
   { label: 'Recipes', to: '/app/recipes', icon: ChefHat },
-  { label: 'History', to: '/app/consumption', icon: Salad },
+  { label: 'Insights', to: '/app/insights', icon: BarChart3 },
 ]
 
 export function AppLayout() {
