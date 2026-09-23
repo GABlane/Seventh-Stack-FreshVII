@@ -7,6 +7,7 @@ import {
   moveToFreezer,
   consumeItem as serviceConsumeItem,
   discardItem as serviceDiscardItem,
+  createLeftoverItem as serviceCreateLeftoverItem,
   subscribeToItems,
 } from '../firebase/index'
 import { calculateFreshness, calculateRescueScore } from '../domain/freshness'
@@ -33,35 +34,35 @@ const DEFAULT_SHELF: Record<StorageLocation, string> = {
 
 function toDisplayItem(record: FoodItemRecord): FoodItem {
   const input = {
-    category:      record.category,
-    quantity:      record.quantity,
-    location:      record.storageLocation,
-    dateAdded:     record.dateAdded,
-    openedDate:    record.openedDate,
-    frozenDate:    record.frozenDate,
+    category:        record.category,
+    quantity:        record.quantity,
+    location:        record.storageLocation,
+    dateAdded:       record.dateAdded,
+    openedDate:      record.openedDate,
+    frozenDate:      record.frozenDate,
     estimatedExpiry: record.estimatedExpiry,
   }
   const freshness = calculateFreshness(input)
   const rescue    = calculateRescueScore(input)
 
   return {
-    id:                 record.id,
-    name:               record.name,
-    category:           record.category,
-    quantity:           record.quantity,
-    unit:               record.unit,
-    location:           record.storageLocation,
-    shelf:              record.shelfKey ?? DEFAULT_SHELF[record.storageLocation],
-    opened:             record.opened,
-    dateAdded:          record.dateAdded,
-    openedDate:         record.openedDate,
-    frozenDate:         record.frozenDate,
-    freshness:          freshness.freshness,
-    freshnessPercentage:freshness.freshnessPercentage,
-    expires:            freshness.expiresLabel,
-    rescueScore:        rescue.score,
-    rescueReasons:      rescue.reasons,
-    accent:             CATEGORY_ACCENT[record.category] ?? '#e8e4d9',
+    id:                  record.id,
+    name:                record.name,
+    category:            record.category,
+    quantity:            record.quantity,
+    unit:                record.unit,
+    location:            record.storageLocation,
+    shelf:               record.shelfKey ?? DEFAULT_SHELF[record.storageLocation],
+    opened:              record.opened,
+    dateAdded:           record.dateAdded,
+    openedDate:          record.openedDate,
+    frozenDate:          record.frozenDate,
+    freshness:           freshness.freshness,
+    freshnessPercentage: freshness.freshnessPercentage,
+    expires:             freshness.expiresLabel,
+    rescueScore:         rescue.score,
+    rescueReasons:       rescue.reasons,
+    accent:              CATEGORY_ACCENT[record.category] ?? '#e8e4d9',
   }
 }
 
@@ -86,11 +87,12 @@ type FoodContextValue = {
   loading: boolean
   items: FoodItem[]
   rawItems: FoodItemRecord[]
-  addNewItem:  (input: AddItemInput) => Promise<void>
-  openItem:    (id: string) => Promise<void>
-  freezeItem:  (id: string) => Promise<void>
-  consumeItem: (id: string, qty: number) => Promise<void>
-  discardItem: (id: string) => Promise<void>
+  addNewItem:        (input: AddItemInput) => Promise<void>
+  openItem:          (id: string) => Promise<void>
+  freezeItem:        (id: string) => Promise<void>
+  consumeItem:       (id: string, qty: number) => Promise<void>
+  discardItem:       (id: string) => Promise<void>
+  createLeftoverItem:(id: string, qty: number) => Promise<void>
 }
 
 const FoodContext = createContext<FoodContextValue | null>(null)
@@ -106,10 +108,10 @@ export function useFoodContext(): FoodContextValue {
 // ---------------------------------------------------------------------------
 
 export function FoodProvider({ children }: { children: React.ReactNode }) {
-  const [uid, setUid]               = useState<string | null>(null)
+  const [uid, setUid]                 = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
-  const [rawItems, setRawItems]     = useState<FoodItemRecord[]>([])
-  const [loading, setLoading]       = useState(true)
+  const [rawItems, setRawItems]       = useState<FoodItemRecord[]>([])
+  const [loading, setLoading]         = useState(true)
 
   // Auth state
   useEffect(() => {
@@ -134,14 +136,11 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
     return unsub
   }, [uid])
 
-  // ---------------------------------------------------------------------------
   // Derived display items
-  // ---------------------------------------------------------------------------
-
   const items: FoodItem[] = rawItems.map(toDisplayItem)
 
   // ---------------------------------------------------------------------------
-  // Action helpers
+  // Helpers
   // ---------------------------------------------------------------------------
 
   function findRaw(id: string): FoodItemRecord {
@@ -152,10 +151,7 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
 
   async function addNewItem(input: AddItemInput): Promise<void> {
     if (!uid) throw new Error('Not signed in')
-    await addItem(uid, {
-      id: crypto.randomUUID(),
-      ...input,
-    })
+    await addItem(uid, { id: crypto.randomUUID(), ...input })
   }
 
   async function openItem(id: string): Promise<void> {
@@ -178,10 +174,15 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
     await serviceDiscardItem(uid, findRaw(id))
   }
 
+  async function createLeftoverItem(id: string, qty: number): Promise<void> {
+    if (!uid) return
+    await serviceCreateLeftoverItem(uid, findRaw(id), qty)
+  }
+
   return (
     <FoodContext.Provider value={{
       uid, displayName, loading, items, rawItems,
-      addNewItem, openItem, freezeItem, consumeItem, discardItem,
+      addNewItem, openItem, freezeItem, consumeItem, discardItem, createLeftoverItem,
     }}>
       {children}
     </FoodContext.Provider>

@@ -1,97 +1,66 @@
-import { ArrowLeft, CalendarDays, CheckCircle, Minus, PackageOpen, Plus, Snowflake, Trash2, Utensils } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Check, Snowflake, Trash2, Utensils } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { FreshnessBadge } from '../components/food/FreshnessBadge'
+import { FreshnessProgress } from '../components/food/FreshnessProgress'
 import { Button } from '../components/ui/button'
 import { useFoodContext } from '../context/FoodContext'
 
 export function FoodDetailPage() {
   const { foodId } = useParams()
-  const navigate = useNavigate()
-  const { items, openItem, freezeItem, consumeItem, discardItem } = useFoodContext()
+  const { items, loading, openItem, freezeItem, consumeItem, discardItem } = useFoodContext()
+  const [actionError, setActionError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const item = items.find((food) => food.id === foodId)
 
-  const item = items.find((i) => i.id === foodId)
-
-  // Local UI state
-  const [consuming,        setConsuming]        = useState(false)
-  const [consumeQty,       setConsumeQty]       = useState(1)
-  const [confirmingDiscard, setConfirmingDiscard] = useState(false)
-  const [busy,             setBusy]             = useState(false)
-
-  if (!item) {
-    return (
-      <div className="w-full max-w-4xl space-y-6">
-        <Link to="/app" className="inline-flex items-center gap-2 text-sm font-bold text-[#426a5a]">
-          <ArrowLeft size={16} /> Back to kitchen
-        </Link>
-        <div className="rounded-[2rem] border border-[#e5e1d5] bg-white p-10 text-center">
-          <p className="text-xl font-black">Item not found</p>
-          <p className="mt-2 text-stone-500">It may have already been consumed or discarded.</p>
-        </div>
-      </div>
-    )
-  }
-
-  async function handleOpen() {
-    setBusy(true)
-    try { await openItem(item!.id) } finally { setBusy(false) }
-  }
-
-  async function handleFreeze() {
-    setBusy(true)
-    try { await freezeItem(item!.id) } finally { setBusy(false) }
-  }
-
-  async function handleConsume() {
-    setBusy(true)
+  async function runAction(action: () => Promise<void>) {
+    setActionError('')
+    setIsSaving(true)
     try {
-      await consumeItem(item!.id, consumeQty)
-      setConsuming(false)
-      navigate('/app')
+      await action()
+    } catch (saveError) {
+      setActionError(saveError instanceof Error ? saveError.message : 'Unable to update this food.')
     } finally {
-      setBusy(false)
+      setIsSaving(false)
     }
   }
 
-  async function handleDiscard() {
-    setBusy(true)
-    try {
-      await discardItem(item!.id)
-      navigate('/app')
-    } finally {
-      setBusy(false)
-    }
+  function useSome() {
+    if (!item) return
+    const entered = window.prompt(`How much ${item.unit} did you use?`, String(item.quantity))
+    if (entered === null) return
+    void runAction(() => consumeItem(item.id, Number(entered)))
   }
 
-  const maxQty = item.quantity
-  const step   = item.unit === 'g' || item.unit === 'ml' ? 50 : 1
+  function consumeAll() {
+    if (!item) return
+    void runAction(() => consumeItem(item.id, item.quantity))
+  }
+
+  if (loading) return <div className="w-full max-w-4xl rounded-3xl border border-[#e5e1d5] bg-white p-10 text-center text-stone-500">Loading food details...</div>
+  if (!item) return (
+    <div className="w-full max-w-4xl space-y-4">
+      <h1 className="text-3xl font-black">Food item not found</h1>
+      <p className="text-stone-600">This item may have been consumed or discarded.</p>
+      <Link to="/app" className="inline-flex items-center gap-2 text-sm font-bold text-[#426a5a]"><ArrowLeft size={16} /> Back to kitchen</Link>
+    </div>
+  )
 
   return (
     <div className="w-full max-w-4xl space-y-8">
-      <Link to="/app" className="inline-flex items-center gap-2 text-sm font-bold text-[#426a5a]">
-        <ArrowLeft size={16} /> Back to kitchen
-      </Link>
-
+      <Link to="/app" className="inline-flex items-center gap-2 text-sm font-bold text-[#426a5a]"><ArrowLeft size={16} /> Back to kitchen</Link>
       <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-        {/* Food icon */}
-        <div
-          className="flex min-h-64 items-center justify-center rounded-[2rem]"
-          style={{ backgroundColor: item.accent }}
-        >
+        <div className="flex min-h-64 items-center justify-center rounded-[2rem]" style={{ backgroundColor: item.accent }}>
           <Utensils size={80} className="text-stone-700/60" />
         </div>
-
-        {/* Details */}
         <div className="rounded-[2rem] border border-[#e5e1d5] bg-white p-6 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm font-bold uppercase tracking-[0.14em] text-stone-500">{item.category}</p>
             <FreshnessBadge state={item.freshness} />
           </div>
           <h1 className="mt-3 text-4xl font-black">{item.name}</h1>
-          <p className="mt-3 text-stone-600">
-            {item.quantity} {item.unit} · {item.location} · {item.opened ? 'Opened' : 'Sealed'}
-          </p>
-
+          <p className="mt-3 text-stone-600">{item.quantity} {item.unit} · {item.location} · {item.opened ? 'Opened' : 'Sealed'}</p>
+          <div className="mt-6"><FreshnessProgress value={item.freshnessPercentage} state={item.freshness} /></div>
           <div className="mt-8 grid grid-cols-2 gap-3">
             <div className="rounded-2xl bg-[#f6f1e5] p-4">
               <CalendarDays size={18} className="text-[#426a5a]" />
@@ -104,125 +73,32 @@ export function FoodDetailPage() {
               <p className="mt-1 font-bold">{item.rescueScore}/100</p>
             </div>
           </div>
-
-          {/* Actions */}
+          {actionError && <p role="alert" className="mt-6 rounded-xl bg-[#f9ddd9] px-4 py-3 text-sm text-[#7c3733]">{actionError}</p>}
           <div className="mt-8 flex flex-wrap gap-3">
-            {!item.opened && (
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={handleOpen}
-              >
-                <PackageOpen size={17} /> Mark opened
-              </Button>
-            )}
-            {item.location !== 'freezer' && (
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={handleFreeze}
-              >
-                <Snowflake size={17} /> Freeze it
-              </Button>
-            )}
-            <Button
-              className="bg-[#426a5a] text-white hover:bg-[#355747]"
-              disabled={busy}
-              onClick={() => { setConsuming(true); setConsumeQty(step) }}
-            >
-              <Utensils size={17} /> Use some
+            <Button disabled={isSaving} onClick={useSome} className="bg-[#426a5a] text-white hover:bg-[#355747]"><Utensils size={17} /> Use some</Button>
+            <Button disabled={isSaving || item.location === 'freezer'} onClick={() => runAction(() => freezeItem(item.id))} variant="outline">
+              <Snowflake size={17} /> {item.location === 'freezer' ? 'In freezer' : 'Freeze it'}
             </Button>
-            <Button
-              variant="destructive"
-              disabled={busy}
-              onClick={() => setConfirmingDiscard(true)}
-            >
-              <Trash2 size={17} /> Discard
-            </Button>
+            <Button disabled={isSaving} onClick={() => runAction(() => discardItem(item.id))} variant="destructive"><Trash2 size={17} /> Discard</Button>
           </div>
-
-          {/* Consume inline panel */}
-          {consuming && (
-            <div className="mt-5 rounded-2xl bg-[#f6f1e5] p-4 space-y-3">
-              <p className="font-bold text-sm">How much are you using?</p>
-              <div className="flex items-center gap-3">
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setConsumeQty((q) => Math.max(step, q - step))}
-                  disabled={consumeQty <= step}
-                >
-                  <Minus size={16} />
-                </Button>
-                <span className="w-24 text-center font-bold">
-                  {consumeQty} {item.unit}
-                </span>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setConsumeQty((q) => Math.min(maxQty, q + step))}
-                  disabled={consumeQty >= maxQty}
-                >
-                  <Plus size={16} />
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  className="bg-[#426a5a] text-white hover:bg-[#355747]"
-                  disabled={busy}
-                  onClick={handleConsume}
-                >
-                  <CheckCircle size={16} /> Confirm
-                </Button>
-                <Button variant="outline" onClick={() => setConsuming(false)}>Cancel</Button>
-              </div>
-            </div>
-          )}
-
-          {/* Discard confirmation */}
-          {confirmingDiscard && (
-            <div className="mt-5 rounded-2xl bg-[#f9ddd9] p-4 space-y-3">
-              <p className="font-bold text-sm text-[#7c3733]">
-                Discard {item.name}? This cannot be undone.
-              </p>
-              <div className="flex gap-2">
-                <Button variant="destructive" disabled={busy} onClick={handleDiscard}>
-                  Yes, discard
-                </Button>
-                <Button variant="outline" onClick={() => setConfirmingDiscard(false)}>Cancel</Button>
-              </div>
-            </div>
+          <Button disabled={isSaving} onClick={consumeAll} variant="outline" className="mt-3 w-full"><Check size={17} /> Mark consumed</Button>
+          {!item.opened && (
+            <Button disabled={isSaving} onClick={() => runAction(() => openItem(item.id))} variant="outline" className="mt-2 w-full">
+              Mark as opened
+            </Button>
           )}
         </div>
       </section>
-
-      {/* Freshness timeline */}
       <section className="rounded-[2rem] border border-[#e5e1d5] bg-white p-6">
         <h2 className="text-xl font-black">Freshness timeline</h2>
         <div className="mt-6 space-y-5 border-l-2 border-[#dce9de] pl-5 text-sm">
           <div>
             <p className="font-bold">Added to your kitchen</p>
-            <p className="text-stone-500">
-              {new Date(item.dateAdded).toLocaleDateString(undefined, { dateStyle: 'medium' })} · {item.location}
-            </p>
+            <p className="text-stone-500">Stored in the {item.location}</p>
           </div>
-          {item.opened && item.openedDate && (
-            <div>
-              <p className="font-bold">Opened — freshness recalculated</p>
-              <p className="text-stone-500">
-                {new Date(item.openedDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-              </p>
-            </div>
-          )}
-          {!item.opened && (
-            <div>
-              <p className="font-bold">Still sealed</p>
-              <p className="text-stone-500">Current estimate is based on category shelf life and storage.</p>
-            </div>
-          )}
           <div>
-            <p className="font-bold">Estimated best by</p>
-            <p className="text-stone-500">{item.expires}</p>
+            <p className="font-bold">{item.opened ? 'Opened and freshness recalculated' : 'Still sealed'}</p>
+            <p className="text-stone-500">Current state is based on storage and estimated expiry.</p>
           </div>
         </div>
       </section>
