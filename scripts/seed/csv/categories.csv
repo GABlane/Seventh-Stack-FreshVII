@@ -1,0 +1,6 @@
+id,label,default_shelf,requires_chill
+produce,Produce,Top shelf,true
+dairy,Dairy & Eggs,Middle shelf,true
+meat,Meat & Seafood,Bottom shelf,true
+grains,Grains & Bread,Dry goods,false
+pantry,Pantry & Condiments,Dry goods,false
