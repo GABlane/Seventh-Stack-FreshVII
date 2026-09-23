@@ -162,29 +162,29 @@ FRESHVII | Seventh Stack | AppCon Hackathon
 
 ### **Recipe service**
 
-- [ ] [BE] Create recipe.service.ts
+- [X] [BE] Create recipe.service.ts
 
-- - [ ] [BE] fetchRecipes() — reads from recipes collection in Firestore
+- - [X] [BE] fetchRecipes() — reads from recipes collection in Firestore
 
-- - [ ] [BE] subscribeToRecipes() — real-time listener variant
+- - [X] [BE] subscribeToRecipes() — real-time listener variant
 
 ### **Rescue domain service**
 
-- [ ] [BE] Create src/domain/rescue.ts
+- [X] [BE] Create src/domain/rescue.ts
 
-- - [ ] [BE] Match active inventory against recipes using subcategory_id
+- - [X] [BE] Match active inventory against recipes using subcategory_id
 
-- - [ ] [BE] Return matched ingredients per recipe
+- - [X] [BE] Return matched ingredients per recipe
 
-- - [ ] [BE] Return missing ingredients per recipe
+- - [X] [BE] Return missing ingredients per recipe
 
-- - [ ] [BE] Return estimated preparation time
+- - [X] [BE] Return estimated preparation time
 
-- - [ ] [BE] Prioritize recipes that rescue the highest urgency items first
+- - [X] [BE] Prioritize recipes that rescue the highest urgency items first
 
-- - [ ] [BE] Sort by rescue-today > use-soon > fresh
+- - [X] [BE] Sort by rescue-today > use-soon > fresh
 
-- [ ] [BE] Connect RecipesPage to rescue engine instead of hardcoded mockData
+- [X] [BE] Connect RecipesPage to rescue engine instead of hardcoded mockData
 
 ## **Phase 5 - Impact metrics**
 

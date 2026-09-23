@@ -20,32 +20,39 @@
 // - ingredients and steps are embedded inside recipes.
 // - food_categories, recipes, and barcodes are global/reference data.
 
-Enum storage_type {
+Enum storageLocation {
   fridge
   freezer
   pantry
 }
 
-Enum item_status {
+Enum status {
   active
   consumed
   discarded
 }
 
-Enum activity_type {
+Enum eventType {
+  added
+  opened
+  frozen
+  unfrozen
   consumed
   discarded
-  frozen
-  thawed
-  cooked
+  edited
+  "leftover-created"
 }
 
-Enum unit_type {
+Enum unit {
+  piece
   g
+  kg
   ml
-  pcs
-  cups
-  servings
+  l
+  bag
+  pack
+  serving
+  tub
 }
 
 
@@ -62,37 +69,7 @@ Table profiles {
 
   name string
 
-  fcm_tokens "string[]" [
-    note: 'Device tokens para sa push notifications'
-  ]
-
-  dinner_on boolean [
-    note: 'Stored as nudges.dinnerOn'
-  ]
-
-  dinner_time string [
-    note: 'Stored as nudges.dinnerTime, e.g. 16:30'
-  ]
-
-  recap_on boolean [
-    note: 'Stored as nudges.recapOn'
-  ]
-
-  recap_day string [
-    note: 'Stored as nudges.recapDay: fri | sat | sun'
-  ]
-
-  diets "string[]" [
-    note: 'halal, nut_allergy, ...'
-  ]
-
-  equipment "string[]" [
-    note: 'stove, rice_cooker, ...'
-  ]
-
-  one_pan_only boolean
-
-  created_at timestamp
+  createdAt timestamp
 }
 
 
@@ -106,68 +83,62 @@ Table items {
     pk
   ]
 
-  user_id string [
-    ref: > profiles.id,
-    note: 'Parent path: profiles/{uid}/items/{itemId}'
-  ]
-
   name string
 
-  category_id string [
-    note: 'Reference to food category ID'
-  ]
-
-  category_name string [
-    note: 'Denormalized category label for easier reads'
+  category string [
+    note: 'Display name: Produce, Dairy & eggs, Meat, Grains, Pantry'
   ]
 
   subcategory_id string [
-    note: 'ID of embedded food subcategory'
+    null,
+    note: 'ID of embedded food subcategory, e.g. chicken, rice, eggs'
   ]
-
-  subcategory_name string [
-    note: 'Denormalized subcategory label'
-  ]
-
-  storage storage_type
-
-  shelf string
 
   quantity number
 
-  purchase_price number
+  unit unit
 
-  unit unit_type
+  storageLocation storageLocation
 
-  purchase_date timestamp
-
-  label_expiry timestamp [
-    null,
-    note: 'Optional expiry date from product label'
-  ]
-
-  use_by timestamp [
-    note: 'Earlier of label expiry or estimated expiry'
-  ]
-
-  opened_at timestamp [
+  shelfKey string [
     null
   ]
 
-  frozen_at timestamp [
+  opened boolean
+
+  dateAdded timestamp
+
+  openedDate timestamp [
     null
   ]
 
-  status item_status
-
-  is_leftover boolean
-
-  source_recipe_id string [
-    null,
-    note: 'Recipe document ID if item came from a recipe'
+  frozenDate timestamp [
+    null
   ]
 
-  created_at timestamp
+  estimatedExpiry timestamp [
+    null,
+    note: 'Computed expiry based on category + storage + opened state'
+  ]
+
+  freshnessState string [
+    null,
+    note: 'fresh | use-soon | rescue-today | expired'
+  ]
+
+  status status
+
+  notes string [
+    null
+  ]
+
+  createdAt timestamp
+
+  updatedAt timestamp
+
+  archivedAt timestamp [
+    null
+  ]
 }
 
 
@@ -178,33 +149,34 @@ Table items {
 Table activity {
 
   id string [
-    pk
+    pk,
+    note: '{itemId}-{eventType}-{timestamp}'
   ]
 
-  user_id string [
-    ref: > profiles.id,
-    note: 'Parent path: profiles/{uid}/activity/{activityId}'
+  foodItemId string [
+    ref: > items.id
   ]
 
-  type activity_type
+  type eventType
 
-  item_id string [
-    note: 'Original item ID'
-  ]
-
-  item_name string [
-    note: 'Snapshot/denormalized item name'
-  ]
-
-  was_at_risk boolean [
-    note: 'true = counted as rescued'
-  ]
-
-  recipe_id string [
+  quantityBefore number [
     null
   ]
 
-  created_at timestamp
+  quantityChange number [
+    null
+  ]
+
+  quantityAfter number [
+    null
+  ]
+
+  metadata "object" [
+    null,
+    note: 'Freeform key-value pairs, e.g. { leftoverId, sourceFoodItemId }'
+  ]
+
+  createdAt timestamp
 }
 
 
@@ -216,7 +188,7 @@ Table food_categories {
 
   id string [
     pk,
-    note: 'Example: meat, seafood, dairy, vegetables'
+    note: 'Example: meat, dairy, produce, grains, pantry'
   ]
 
   label string
@@ -267,28 +239,20 @@ Table barcodes {
 
   code string [
     pk,
-    note: 'Barcode value can be used as Firestore document ID'
+    note: 'Barcode value used as Firestore document ID'
   ]
 
   name string
 
-  category_id string [
-    note: 'Reference to food category ID'
-  ]
-
-  category_name string [
-    note: 'Denormalized category label'
+  category string [
+    note: 'Display name matching items.category'
   ]
 
   subcategory_id string [
     note: 'Reference to embedded subcategory ID'
   ]
 
-  subcategory_name string [
-    note: 'Denormalized subcategory label'
-  ]
-
   default_qty number
 
-  unit unit_type
+  unit unit
 }
