@@ -24,8 +24,9 @@ function parseJson(text: string) {
   return JSON.parse(json) as Record<string, unknown>
 }
 
-export default async function detectFood(request: Request) {
-  if (request.method !== 'POST') return Response.json({ error: 'Method not allowed' }, { status: 405 })
+// Named method export (Web-standard handler). A plain default export is treated
+// as a legacy Node (req, res) handler, so a returned Response is never sent.
+export async function POST(request: Request) {
   if (!process.env.GEMINI_API_KEY) return Response.json({ error: 'Food scanning is not configured yet.' }, { status: 503 })
 
   try {
