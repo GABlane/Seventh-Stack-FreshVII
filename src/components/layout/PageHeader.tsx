@@ -5,6 +5,7 @@ import { useTheme } from '../../hooks/useTheme'
 import { logout } from '../../firebase/services/auth.service'
 import { useFoodItems } from '../../hooks/useFoodItems'
 import { useImpactEvents } from '../../hooks/useImpactEvents'
+import freshlyLogo from '../../assets/freshly-light-background.png'
 
 export function PageHeader() {
   const [isOpen, setIsOpen] = useState(false)
@@ -40,7 +41,7 @@ export function PageHeader() {
 
   return <header className="border-b-2" style={{ backgroundColor: selectedPalette.header, borderBottom: `3px solid ${selectedPalette.border}` }}>
     <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-      <span className="text-sm font-black tracking-[0.18em]" style={{ color: selectedPalette.accent }}>FRESHVII</span>
+      <img src={freshlyLogo} alt="Freshly" className="h-7 w-auto max-w-[8rem] object-contain sm:h-8" />
       <div className="flex items-center gap-2">
         <div className="relative">
           <button type="button" aria-label={`Notifications${alertCount ? `, ${alertCount} active` : ''}`} title="Notifications" aria-expanded={isOpen} onClick={() => { setIsOpen((open) => !open); setIsSettingsOpen(false) }} className="relative flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white" style={{ color: selectedPalette.accent }}><Bell size={19} />{alertCount > 0 && <span aria-hidden="true" className="absolute right-1 top-1 flex min-w-4 items-center justify-center rounded-full bg-[#d94444] px-1 text-[10px] font-black leading-4 text-white">{alertCount > 9 ? '9+' : alertCount}</span>}</button>
@@ -68,7 +69,7 @@ export function PageHeader() {
         <div className="relative">
           <button type="button" aria-label="Settings" title="Settings" aria-haspopup="menu" aria-expanded={isSettingsOpen} onClick={() => { setIsSettingsOpen((open) => !open); setIsOpen(false) }} className="flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white" style={{ color: selectedPalette.accent }}><Settings size={19} /></button>
           {isSettingsOpen && <div role="menu" aria-label="Settings menu" className="absolute right-0 top-12 z-30 w-72 overflow-hidden rounded-2xl border border-[#c6dde5] bg-white shadow-[0_14px_35px_rgba(70,67,52,0.16)]">
-            <div className="border-b border-[#eeeade] px-4 py-3"><p className="font-bold text-stone-800">Preferences</p><p className="mt-1 text-xs text-stone-500">Personalize your FRESHVII experience.</p></div>
+            <div className="border-b border-[#eeeade] px-4 py-3"><p className="font-bold text-stone-800">Preferences</p><p className="mt-1 text-xs text-stone-500">Personalize your Freshly experience.</p></div>
             <Link to="/app/settings" onClick={() => setIsSettingsOpen(false)} className="flex items-center gap-2 px-4 py-3 text-sm font-bold text-[#193b5a] hover:bg-[#eaf8fa]"><Settings size={16} /> Account settings</Link>
             <button type="button" disabled={isSigningOut} onClick={handleSignOut} className="flex w-full items-center gap-2 border-t border-[#eeeade] px-4 py-3 text-left text-sm font-bold text-[#b84f49] hover:bg-[#fff0ef] disabled:cursor-wait disabled:opacity-60"><LogOut size={16} /> {isSigningOut ? 'Signing out...' : 'Log out'}</button>
           </div>}

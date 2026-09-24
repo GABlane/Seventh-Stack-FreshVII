@@ -164,6 +164,64 @@ body {
   min-width: 320px;
 }
 
+.food-visual {
+  width: clamp(2.25rem, 5vw, 3.5rem);
+}
+
+.food-visual-icon {
+  width: clamp(1.75rem, 4vw, 2.75rem);
+  height: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.food-visual-icon svg {
+  width: clamp(0.9rem, 2vw, 1.4rem);
+  height: clamp(0.9rem, 2vw, 1.4rem);
+}
+
+.food-visual-label {
+  font-size: clamp(0.36rem, 0.85vw, 0.58rem);
+}
+
+.food-visual-large {
+  width: clamp(3rem, 6vw, 4rem);
+}
+
+.food-visual-large .food-visual-icon {
+  width: clamp(2.25rem, 5vw, 3.25rem);
+  height: clamp(2.25rem, 5vw, 3.25rem);
+}
+
+.food-visual-large .food-visual-icon svg {
+  width: clamp(1.25rem, 2.5vw, 1.75rem);
+  height: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+.food-visual-large .food-visual-label {
+  font-size: clamp(0.44rem, 1vw, 0.62rem);
+}
+
+.fridge-illustration-canvas {
+  aspect-ratio: 1234 / 935;
+}
+
+main[class*='min-h-svh'] a[href='/'] {
+  display: inline-flex;
+  width: clamp(9rem, 42vw, 13rem);
+  aspect-ratio: 735 / 310;
+  background: center / contain no-repeat url('./assets/freshly-light-background.png');
+  font-size: 0;
+}
+
+main[class*='min-h-svh'] > div > section:last-child > div:first-child {
+  display: flex;
+  justify-content: center;
+}
+
+main[class*='min-h-svh'] > div > section:first-child a[href='/'] {
+  display: none;
+  background-image: url('./assets/freshly-light-background.png');
+}
+
 button,
 a,
 input,

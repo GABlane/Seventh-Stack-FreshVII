@@ -5,11 +5,14 @@ import { Fridge } from '../components/fridge/Fridge'
 import { StorageTabs } from '../components/fridge/StorageTabs'
 import { useFoodContext } from '../context/FoodContext'
 import type { StorageLocation } from '../data/mockData'
+import { auth } from '../firebase/config'
 
 export function HomePage() {
   const { items, loading, displayName } = useFoodContext()
   const [location, setLocation] = useState<StorageLocation>('fridge')
   const [query, setQuery] = useState('')
+  const fullGreetingName = displayName?.trim() || auth.currentUser?.displayName?.trim() || auth.currentUser?.email?.split('@')[0] || 'there'
+  const greetingName = fullGreetingName.split(/\s+/)[0] || 'there'
 
   const visibleItems = items.filter((item) => item.location === location && item.name.toLowerCase().includes(query.toLowerCase()))
   const atRisk = items.filter((item) => item.freshness === 'rescue-today' || item.freshness === 'use-soon').length
@@ -23,7 +26,7 @@ export function HomePage() {
         <div>
           <p className="text-xs font-bold text-[#193b5a]">{today}</p>
           <h1 className="mt-1 text-[2rem] font-black leading-none tracking-[-0.04em] text-[#193b5a] sm:text-4xl">
-            Good afternoon, {displayName ?? 'there'}
+            Good afternoon, {greetingName}
           </h1>
         </div>
       </section>

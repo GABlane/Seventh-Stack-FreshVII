@@ -6,10 +6,10 @@ import { FridgeShelf } from './FridgeShelf'
 import { storageZones } from '../../lib/storage-zones'
 
 const fridgeShelfPositions: Record<string, string> = {
-  'fridge-top': 'left-[10%] top-[17%] h-[19%] w-[42%]',
-  'fridge-middle': 'left-[10%] top-[38%] h-[19%] w-[42%]',
-  'fridge-crisper': 'left-[10%] top-[61%] h-[16%] w-[42%]',
-  'fridge-door': 'left-[58%] top-[14%] h-[61%] w-[31%]',
+  'fridge-top': 'left-[12%] top-[28%] h-[20%] w-[40%]',
+  'fridge-middle': 'left-[12%] top-[45%] h-[16%] w-[40%]',
+  'fridge-crisper': 'left-[12%] top-[66%] h-[12%] w-[40%]',
+  'fridge-door': 'left-[58%] top-[22%] h-[58%] w-[31%]',
 }
 
 const freezerShelfPositions: Record<string, string> = {
@@ -35,7 +35,7 @@ export function Fridge({ items, location }: { items: FoodItem[]; location: Stora
           </div>
           <span className="rounded-full bg-[#d9eef3] px-3 py-1 text-xs font-bold text-[#193b5a]">{items.length} item{items.length === 1 ? '' : 's'}</span>
         </div>
-        <div className="relative left-1/2 aspect-square w-[122%] max-w-[23rem] -translate-x-1/2 sm:w-full sm:max-w-[34rem] lg:max-w-[38rem]">
+        <div className="fridge-illustration-canvas relative left-1/2 w-[122%] max-w-[23rem] -translate-x-1/2 sm:w-full sm:max-w-[34rem] lg:max-w-[38rem]">
           <img src={fridgeIllustration} alt="Open Freshly refrigerator" className="absolute inset-0 size-full object-contain" />
           {zones.map((zone) => <FridgeShelf key={zone.key} zone={zone} items={items.filter((item) => item.shelfKey === zone.key)} overlayClassName={fridgeShelfPositions[zone.key]} />)}
         </div>

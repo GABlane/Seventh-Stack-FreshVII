@@ -192,7 +192,7 @@ export function AddFoodPage() {
       <div>
         <p className="text-sm font-bold uppercase tracking-[0.14em] text-[#193b5a]">New inventory</p>
         <h1 className="mt-2 text-4xl font-black tracking-tight text-[#193b5a]">Add food</h1>
-        <p className="mt-3 max-w-xl text-stone-600">Add an item to your kitchen. FRESHVII will estimate when it needs attention.</p>
+        <p className="mt-3 max-w-xl text-stone-600">Add an item to your kitchen. Freshly will estimate when it needs attention.</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-6 rounded-[2rem] border border-[#c6dde5] bg-white p-5 shadow-[0_8px_24px_rgba(70,67,52,0.05)] sm:p-8">
         <div className="flex flex-col justify-between gap-3 rounded-2xl bg-[#eaf8fa] p-4 sm:flex-row sm:items-center">

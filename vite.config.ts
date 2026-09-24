@@ -13,8 +13,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons.svg'],
       manifest: {
-        name: 'FRESHVII Food Rescue',
-        short_name: 'FRESHVII',
+        name: 'Freshly Food Rescue',
+        short_name: 'Freshly',
         description: 'Track freshness, rescue food, and cook what matters today.',
         theme_color: '#426a5a',
         background_color: '#f8f7f2',
