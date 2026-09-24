@@ -5,7 +5,7 @@
  */
 import { initializeApp, getApps } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -63,6 +63,16 @@ export async function signInAsDemo(): Promise<string> {
       'Create .env.seed with:\n  DEMO_EMAIL=you@example.com\n  DEMO_PASSWORD=yourpassword'
     )
   }
-  const cred = await signInWithEmailAndPassword(auth, email, password)
-  return cred.user.uid
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, password)
+    console.log('  Signed in as existing demo user')
+    return cred.user.uid
+  } catch (err: any) {
+    const notFound = ['auth/user-not-found', 'auth/invalid-credential', 'auth/wrong-password']
+    if (!notFound.includes(err.code)) throw err
+    console.log('  Demo user not found — creating account...')
+    const cred = await createUserWithEmailAndPassword(auth, email, password)
+    console.log('  Demo account created')
+    return cred.user.uid
+  }
 }

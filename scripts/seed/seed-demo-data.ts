@@ -19,20 +19,31 @@ type DemoItemRow = {
   days_frozen: string
   is_leftover: string
   purchase_price: string
+  expiry_override_days: string
 }
 
 const categoryNames: Record<string, string> = {
   produce: 'Produce', dairy: 'Dairy & eggs', meat: 'Meat', grains: 'Grains', pantry: 'Pantry',
 }
 
+// Previously consumed amounts — added to quantity in CSV to get initialQuantity
 const consumedAmounts: Record<string, number> = {
-  'demo-tomatoes': 3, 'demo-milk': 300, 'demo-eggs': 6,
+  'demo-chicken':      100,  // 500g initial → 400g now
+  'demo-rice':         100,  // 400g initial → 300g now
+  'demo-tomatoes':       2,  // 6 pcs initial → 4 now
+  'demo-milk':         200,  // 700ml initial → 500ml now
+  'demo-orange-juice': 200,  // 700ml initial → 500ml now
+  'demo-eggs':           2,  // 12 pcs initial → 10 now
 }
 
 function isoDaysAgo(now: Date, days: number) {
   const date = new Date(now)
   date.setDate(date.getDate() - days)
   return date.toISOString()
+}
+
+function isoFromNow(now: Date, days: number) {
+  return new Date(now.getTime() + days * 86_400_000).toISOString()
 }
 
 function shelfFor(storage: DemoItemRow['storage']) {
@@ -55,9 +66,9 @@ async function deleteCollection(uid: string, name: 'items' | 'activity') {
 }
 
 export async function seedDemoData(reset = false) {
-  console.log('\n--- Seeding Freshly demo data ---')
+  console.log('\n--- Seeding demo data ---')
   const uid = await signInAsDemo()
-  console.log(`  Signed in as uid: ${uid}`)
+  console.log(`  uid: ${uid}`)
 
   if (reset) {
     await deleteCollection(uid, 'items')
@@ -67,7 +78,14 @@ export async function seedDemoData(reset = false) {
   const now = new Date()
   const rows = parse(CSV('demo_items.csv'), { columns: true, skip_empty_lines: true }) as DemoItemRow[]
   const batch = writeBatch(db)
-  batch.set(doc(db, `profiles/${uid}`), { id: uid, updatedAt: now.toISOString() }, { merge: true })
+
+  // Write profile docs for both paths used in the app
+  batch.set(doc(db, `profiles/${uid}`), {
+    id: uid, name: 'Demo User', createdAt: now.toISOString(), updatedAt: now.toISOString(),
+  }, { merge: true })
+  batch.set(doc(db, `users/${uid}`), {
+    uid, email: process.env.DEMO_EMAIL, displayName: 'Demo User', createdAt: now.toISOString(),
+  }, { merge: true })
 
   for (const row of rows) {
     const quantity = Number(row.quantity)
@@ -75,6 +93,10 @@ export async function seedDemoData(reset = false) {
     const dateAdded = isoDaysAgo(now, Number(row.days_added))
     const openedDate = row.days_opened ? isoDaysAgo(now, Number(row.days_opened)) : undefined
     const frozenDate = row.days_frozen ? isoDaysAgo(now, Number(row.days_frozen)) : undefined
+    const estimatedExpiry = row.expiry_override_days
+      ? isoFromNow(now, Number(row.expiry_override_days))
+      : undefined
+
     const item = {
       id: row.id,
       name: row.name,
@@ -89,6 +111,7 @@ export async function seedDemoData(reset = false) {
       dateAdded,
       openedDate,
       frozenDate,
+      estimatedExpiry,
       pricePaid: Number(row.purchase_price),
       status: 'active' as const,
       notes: row.is_leftover === 'true' ? 'Created from a leftover portion.' : undefined,
@@ -96,35 +119,75 @@ export async function seedDemoData(reset = false) {
       updatedAt: now.toISOString(),
     }
 
-    batch.set(doc(db, `profiles/${uid}/items/${row.id}`), Object.fromEntries(Object.entries(item).filter(([, value]) => value !== undefined)))
+    batch.set(
+      doc(db, `profiles/${uid}/items/${row.id}`),
+      Object.fromEntries(Object.entries(item).filter(([, value]) => value !== undefined))
+    )
     batch.set(doc(db, `profiles/${uid}/activity/${row.id}-added`), {
-      id: `${row.id}-added`, foodItemId: row.id, type: 'added', quantityAfter: item.initialQuantity, createdAt: dateAdded,
+      id: `${row.id}-added`,
+      foodItemId: row.id,
+      type: 'added',
+      quantityAfter: item.initialQuantity,
+      createdAt: dateAdded,
     })
 
     if (previouslyConsumed) {
       batch.set(doc(db, `profiles/${uid}/activity/${row.id}-consumed`), {
-        id: `${row.id}-consumed`, foodItemId: row.id, type: 'consumed', quantityBefore: item.initialQuantity, quantityChange: -previouslyConsumed, quantityAfter: quantity, createdAt: isoDaysAgo(now, 1),
+        id: `${row.id}-consumed`,
+        foodItemId: row.id,
+        type: 'consumed',
+        quantityBefore: item.initialQuantity,
+        quantityChange: -previouslyConsumed,
+        quantityAfter: quantity,
+        createdAt: isoDaysAgo(now, 1),
       })
     }
   }
 
+  // Extra consumed event for chicken — simulates a second use session
+  batch.set(doc(db, `profiles/${uid}/activity/demo-chicken-consumed-2`), {
+    id: 'demo-chicken-consumed-2',
+    foodItemId: 'demo-chicken',
+    type: 'consumed',
+    quantityBefore: 500,
+    quantityChange: -100,
+    quantityAfter: 400,
+    createdAt: isoDaysAgo(now, 2),
+  })
+
   const discardedItems = [
-    { id: 'demo-wasted-spinach', name: 'Baby Spinach', category: 'Produce', quantity: 1, unit: 'bag', pricePaid: 65, daysAdded: 9, daysDiscarded: 2 },
-    { id: 'demo-wasted-bread', name: 'Whole Wheat Bread', category: 'Grains', quantity: 1, unit: 'pack', pricePaid: 85, daysAdded: 12, daysDiscarded: 4 },
+    { id: 'demo-wasted-spinach',      name: 'Baby Spinach',      category: 'Produce',      quantity: 1, unit: 'bag',  pricePaid: 65,  daysAdded: 9,  daysDiscarded: 2 },
+    { id: 'demo-wasted-bread',        name: 'Whole Wheat Bread', category: 'Grains',       quantity: 1, unit: 'pack', pricePaid: 85,  daysAdded: 12, daysDiscarded: 4 },
+    { id: 'demo-wasted-strawberries', name: 'Strawberries',      category: 'Produce',      quantity: 1, unit: 'pack', pricePaid: 120, daysAdded: 8,  daysDiscarded: 3 },
+    { id: 'demo-wasted-greek-yogurt', name: 'Greek Yogurt',      category: 'Dairy & eggs', quantity: 1, unit: 'tub',  pricePaid: 90,  daysAdded: 15, daysDiscarded: 5 },
   ]
 
   for (const item of discardedItems) {
     const dateAdded = isoDaysAgo(now, item.daysAdded)
     const discardedAt = isoDaysAgo(now, item.daysDiscarded)
     batch.set(doc(db, `profiles/${uid}/items/${item.id}`), {
-      ...item, initialQuantity: item.quantity, storageLocation: 'fridge', shelfKey: 'fridge-crisper', opened: false,
-      dateAdded, status: 'discarded', createdAt: dateAdded, updatedAt: discardedAt, archivedAt: discardedAt,
+      ...item,
+      initialQuantity: item.quantity,
+      storageLocation: 'fridge',
+      shelfKey: 'fridge-crisper',
+      opened: false,
+      dateAdded,
+      status: 'discarded',
+      createdAt: dateAdded,
+      updatedAt: discardedAt,
+      archivedAt: discardedAt,
     })
     batch.set(doc(db, `profiles/${uid}/activity/${item.id}-added`), {
       id: `${item.id}-added`, foodItemId: item.id, type: 'added', quantityAfter: item.quantity, createdAt: dateAdded,
     })
     batch.set(doc(db, `profiles/${uid}/activity/${item.id}-discarded`), {
-      id: `${item.id}-discarded`, foodItemId: item.id, type: 'discarded', quantityBefore: item.quantity, quantityAfter: 0, metadata: { estimatedWasteCost: item.pricePaid }, createdAt: discardedAt,
+      id: `${item.id}-discarded`,
+      foodItemId: item.id,
+      type: 'discarded',
+      quantityBefore: item.quantity,
+      quantityAfter: 0,
+      metadata: { estimatedWasteCost: item.pricePaid },
+      createdAt: discardedAt,
     })
   }
 
