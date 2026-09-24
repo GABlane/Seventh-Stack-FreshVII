@@ -9,6 +9,8 @@ import {
   serverTimestamp,
   query,
   where,
+  orderBy,
+  limit as firestoreLimit,
   Timestamp,
   type Unsubscribe,
   type QuerySnapshot,
@@ -25,6 +27,7 @@ import {
   createLeftover,
   type FoodItemRecord,
   type FoodEvent,
+  type FoodEventType,
   type FoodStatus,
 } from '../../domain/food'
 import type { StorageLocation } from '../../data/mockData'
@@ -41,6 +44,9 @@ const itemDoc = (uid: string, itemId: string) =>
 
 const activityDoc = (uid: string, eventId: string) =>
   doc(db, `profiles/${uid}/activity/${eventId}`)
+
+const activityCol = (uid: string) =>
+  collection(db, `profiles/${uid}/activity`)
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -225,6 +231,54 @@ export async function createLeftoverItem(
   await batch.commit()
 
   return { original, leftover }
+}
+
+// ---------------------------------------------------------------------------
+// Impact events
+// ---------------------------------------------------------------------------
+
+export type ImpactEvent = {
+  id: string
+  foodItemId: string
+  type: string
+  label?: string
+  quantityBefore?: number
+  quantityChange?: number
+  quantityAfter?: number
+  metadata?: Record<string, string | number | boolean>
+  createdAt: string
+}
+
+const EVENT_TYPE_MAP: Record<FoodEventType, string> = {
+  'added':            'product-added',
+  'consumed':         'food-consumed',
+  'frozen':           'moved-to-freezer',
+  'opened':           'food-opened',
+  'unfrozen':         'food-frozen-unfrozen',
+  'discarded':        'food-discarded',
+  'edited':           'food-edited',
+  'leftover-created': 'leftover-created',
+}
+
+export async function fetchActivityEvents(
+  uid: string,
+  limitCount = 50,
+): Promise<ImpactEvent[]> {
+  const q = query(activityCol(uid), orderBy('createdAt', 'desc'), firestoreLimit(limitCount))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((d) => {
+    const data = d.data() as FoodEvent
+    return {
+      id:             data.id,
+      foodItemId:     data.foodItemId,
+      type:           EVENT_TYPE_MAP[data.type] ?? data.type,
+      quantityBefore: data.quantityBefore,
+      quantityChange: data.quantityChange,
+      quantityAfter:  data.quantityAfter,
+      metadata:       data.metadata,
+      createdAt:      toIso(data.createdAt),
+    } satisfies ImpactEvent
+  })
 }
 
 // ---------------------------------------------------------------------------
