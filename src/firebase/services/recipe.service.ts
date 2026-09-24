@@ -19,6 +19,7 @@ export type FirestoreRecipe = {
   diet_tags: string[]
   equipment: string[]
   ingredients: RecipeIngredient[]
+  steps?: string[]
 }
 
 // ---------------------------------------------------------------------------
