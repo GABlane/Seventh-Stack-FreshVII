@@ -36,20 +36,20 @@ export function PageHeader() {
     }
   }
 
-  return <header className="border-b border-[#cde6ed] bg-[#eefafd]">
+  return <header className="border-b border-[#bdebf0] bg-[#eaf8fa]">
     <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-      <span className="text-sm font-black tracking-[0.18em] text-[#426a5a]">FRESHVII</span>
+      <span className="text-sm font-black tracking-[0.18em] text-[#193b5a]">FRESHVII</span>
       <div className="flex items-center gap-2">
         <div className="relative">
-          <button type="button" aria-label={`Notifications${alertCount ? `, ${alertCount} active` : ''}`} title="Notifications" aria-expanded={isOpen} onClick={() => setIsOpen((open) => !open)} className="relative flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white hover:text-[#426a5a]"><Bell size={19} />{alertCount > 0 && <span aria-hidden="true" className="absolute right-1 top-1 flex min-w-4 items-center justify-center rounded-full bg-[#b84f49] px-1 text-[10px] font-black leading-4 text-white">{alertCount > 9 ? '9+' : alertCount}</span>}</button>
-          {isOpen && <div className="absolute right-0 top-12 z-20 w-80 overflow-hidden rounded-2xl border border-[#e5e1d5] bg-white shadow-[0_14px_35px_rgba(70,67,52,0.16)]">
+          <button type="button" aria-label={`Notifications${alertCount ? `, ${alertCount} active` : ''}`} title="Notifications" aria-expanded={isOpen} onClick={() => setIsOpen((open) => !open)} className="relative flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white hover:text-[#193b5a]"><Bell size={19} />{alertCount > 0 && <span aria-hidden="true" className="absolute right-1 top-1 flex min-w-4 items-center justify-center rounded-full bg-[#d94444] px-1 text-[10px] font-black leading-4 text-white">{alertCount > 9 ? '9+' : alertCount}</span>}</button>
+          {isOpen && <div className="absolute right-0 top-12 z-20 w-80 overflow-hidden rounded-2xl border border-[#c6dde5] bg-white shadow-[0_14px_35px_rgba(70,67,52,0.16)]">
             <div className="flex items-center justify-between border-b border-[#eeeade] px-4 py-3"><p className="font-bold">Notifications</p><span className="text-xs font-semibold text-stone-400">{alertCount} active</span></div>
             <div className="max-h-80 overflow-y-auto">
               {expiryItems.map((item) => {
                 const message = item.freshness === 'expired' ? `Expired: ${item.name}` : `Use ${item.name} soon`
                 return (
-                  <Link key={`expiry-${item.id}`} to={`/app/food/${item.id}`} onClick={() => setIsOpen(false)} className="flex gap-3 border-b border-[#f1efe6] px-4 py-3 hover:bg-[#f8f7f2]">
-                    <AlertTriangle size={17} className="mt-0.5 shrink-0 text-[#b84f49]" />
+                  <Link key={`expiry-${item.id}`} to={`/app/food/${item.id}`} onClick={() => setIsOpen(false)} className="flex gap-3 border-b border-[#f1efe6] px-4 py-3 hover:bg-[#eaf8fa]">
+                    <AlertTriangle size={17} className="mt-0.5 shrink-0 text-[#d94444]" />
                     <span className="min-w-0">
                       <strong className="block truncate text-sm">{message}</strong>
                       <span className="block text-xs text-stone-500">{item.quantity} {item.unit} remaining - {item.expires}</span>
@@ -57,13 +57,13 @@ export function PageHeader() {
                   </Link>
                 )
               })}
-              {lifecycleEvents.map((event) => { const Icon = eventIcon(event.type); return <Link key={event.id} to="/app/notifications" onClick={() => setIsOpen(false)} className="flex gap-3 border-b border-[#f1efe6] px-4 py-3 hover:bg-[#f8f7f2]"><Icon size={17} className="mt-0.5 shrink-0 text-[#426a5a]" /><span className="min-w-0"><strong className="block truncate text-sm">{eventTitle(event.type)}</strong><span className="block truncate text-xs text-stone-500">{event.label ?? 'Your kitchen was updated.'}</span></span></Link> })}
+              {lifecycleEvents.map((event) => { const Icon = eventIcon(event.type); return <Link key={event.id} to="/app/notifications" onClick={() => setIsOpen(false)} className="flex gap-3 border-b border-[#f1efe6] px-4 py-3 hover:bg-[#eaf8fa]"><Icon size={17} className="mt-0.5 shrink-0 text-[#193b5a]" /><span className="min-w-0"><strong className="block truncate text-sm">{eventTitle(event.type)}</strong><span className="block truncate text-xs text-stone-500">{event.label ?? 'Your kitchen was updated.'}</span></span></Link> })}
               {alertCount === 0 && <p className="px-4 py-8 text-center text-sm text-stone-500">You are all caught up.</p>}
             </div>
-            <Link to="/app/notifications" onClick={() => setIsOpen(false)} className="block border-t border-[#eeeade] px-4 py-3 text-center text-sm font-bold text-[#426a5a] hover:bg-[#f8f7f2]">View all notifications</Link>
+            <Link to="/app/notifications" onClick={() => setIsOpen(false)} className="block border-t border-[#eeeade] px-4 py-3 text-center text-sm font-bold text-[#193b5a] hover:bg-[#eaf8fa]">View all notifications</Link>
           </div>}
         </div>
-        <button type="button" disabled={isSigningOut} onClick={handleSignOut} aria-label="Sign out" title="Sign out" className="flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white hover:text-[#426a5a] disabled:cursor-wait disabled:opacity-60"><LogOut size={19} /></button>
+        <button type="button" disabled={isSigningOut} onClick={handleSignOut} aria-label="Sign out" title="Sign out" className="flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white hover:text-[#193b5a] disabled:cursor-wait disabled:opacity-60"><LogOut size={19} /></button>
       </div>
     </div>
   </header>

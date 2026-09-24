@@ -22,7 +22,7 @@ import { defaultShelfKey, shelfLabel, zoneForShelfKey } from '../lib/storage-zon
 // ---------------------------------------------------------------------------
 
 const CATEGORY_ACCENT: Record<string, string> = {
-  'Produce':     '#dce9de',
+  'Produce':     '#d9eef3',
   'Dairy & eggs':'#f4e6c9',
   'Meat':        '#f0ddd2',
   'Grains':      '#eee9d9',

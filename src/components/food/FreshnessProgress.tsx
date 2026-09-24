@@ -1,9 +1,9 @@
 import type { FreshnessState } from '../../data/mockData'
 
 const colors: Record<FreshnessState, string> = {
-  fresh: 'bg-[#7fb685]',
+  fresh: 'bg-[#6bcb77]',
   'use-soon': 'bg-[#d99c42]',
-  'rescue-today': 'bg-[#ef6f6c]',
+  'rescue-today': 'bg-[#ff6b6b]',
   expired: 'bg-stone-400',
 }
 

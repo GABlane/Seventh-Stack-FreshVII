@@ -32,7 +32,7 @@ export default async function detectFood(request: Request) {
     const mimeType = typeof body.mimeType === 'string' ? body.mimeType : 'image/jpeg'
 
     if (!imageBase64 || !mimeType.startsWith('image/')) return Response.json({ error: 'Provide a valid food image.' }, { status: 400 })
-    if (imageBase64.length > 10_000_000) return Response.json({ error: 'Choose an image smaller than 7 MB.' }, { status: 413 })
+    if (imageBase64.length > 4_200_000) return Response.json({ error: 'Choose a smaller image to scan.' }, { status: 413 })
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
     const interaction = await ai.interactions.create({

@@ -15,13 +15,13 @@ export function Fridge({ items, location }: { items: FoodItem[]; location: Stora
 
   if (location === 'fridge') {
     return (
-      <section className="overflow-hidden rounded-[2rem] border border-[#e5e1d5] bg-[#f6f1e5] p-3 shadow-[0_18px_35px_rgba(70,67,52,0.12)] sm:p-5" aria-label="Your fridge">
+      <section className="overflow-hidden rounded-[2rem] border border-[#c6dde5] bg-[#eaf8fa] p-3 shadow-[0_18px_35px_rgba(70,67,52,0.12)] sm:p-5" aria-label="Your fridge">
         <div className="mb-3 flex items-center justify-between px-1">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#426a5a]">Freshly storage</p>
-            <h2 className="mt-0.5 text-lg font-black text-[#2d493d]">Your fridge</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#193b5a]">Freshly storage</p>
+            <h2 className="mt-0.5 text-lg font-black text-[#193b5a]">Your fridge</h2>
           </div>
-          <span className="rounded-full bg-[#dce9de] px-3 py-1 text-xs font-bold text-[#426a5a]">{items.length} item{items.length === 1 ? '' : 's'}</span>
+          <span className="rounded-full bg-[#d9eef3] px-3 py-1 text-xs font-bold text-[#193b5a]">{items.length} item{items.length === 1 ? '' : 's'}</span>
         </div>
         <div className="relative left-1/2 aspect-square w-[122%] max-w-[23rem] -translate-x-1/2 sm:w-full sm:max-w-[34rem] lg:max-w-[38rem]">
           <img src={fridgeIllustration} alt="Open Freshly refrigerator" className="absolute inset-0 size-full object-contain" />
@@ -32,10 +32,10 @@ export function Fridge({ items, location }: { items: FoodItem[]; location: Stora
   }
 
   return (
-    <section className="overflow-hidden rounded-[2rem] border-[7px] border-[#d8d1c0] bg-[#f6f1e5] p-3 shadow-[0_18px_35px_rgba(70,67,52,0.12)] sm:p-5" aria-label={`Your ${location}`}>
-      <div className="mb-4 flex items-center justify-between rounded-2xl bg-[#426a5a] px-4 py-3 text-white">
+    <section className="overflow-hidden rounded-[2rem] border-[7px] border-[#b8d4df] bg-[#eaf8fa] p-3 shadow-[0_18px_35px_rgba(70,67,52,0.12)] sm:p-5" aria-label={`Your ${location}`}>
+      <div className="mb-4 flex items-center justify-between rounded-2xl bg-[#193b5a] px-4 py-3 text-white">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#f8dda6]">Freshly storage</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#ffe167]">Freshly storage</p>
           <h2 className="mt-0.5 text-lg font-black capitalize">{location}</h2>
         </div>
         <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">{items.length} item{items.length === 1 ? '' : 's'}</span>

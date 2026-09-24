@@ -280,8 +280,8 @@ async function runTests(
 const STATUS_STYLES: Record<TestStatus, string> = {
   idle:    'bg-stone-100 text-stone-400',
   running: 'bg-amber-100 text-amber-700 animate-pulse',
-  pass:    'bg-[#dce9de] text-[#2d5a3d]',
-  fail:    'bg-[#f9ddd9] text-[#7c3733]',
+  pass:    'bg-[#d9eef3] text-[#193b5a]',
+  fail:    'bg-[#ffe3e3] text-[#d94444]',
 }
 
 const STATUS_LABEL: Record<TestStatus, string> = {
@@ -320,11 +320,11 @@ export function FoodServiceTestPage() {
   const done = results.length > 0 && !running
 
   return (
-    <main className="min-h-svh bg-[#f8f7f2] px-5 py-10">
+    <main className="min-h-svh bg-[#eaf8fa] px-5 py-10">
       <div className="mx-auto max-w-2xl">
 
         {/* Header */}
-        <div className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-[#426a5a]">
+        <div className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-[#193b5a]">
           Dev tools
         </div>
         <h1 className="mb-1 text-2xl font-black tracking-tight">Food Service Tests</h1>
@@ -336,19 +336,19 @@ export function FoodServiceTestPage() {
         {authLoading ? (
           <p className="text-sm text-stone-400">Checking auth…</p>
         ) : !uid ? (
-          <div className="rounded-2xl bg-[#f9ddd9] px-5 py-4 text-sm text-[#7c3733]">
+          <div className="rounded-2xl bg-[#ffe3e3] px-5 py-4 text-sm text-[#d94444]">
             Not signed in. <a href="/login" className="font-bold underline">Sign in first</a>, then come back to this page.
           </div>
         ) : (
           <>
             <div className="mb-6 flex items-center gap-3">
-              <div className="rounded-xl bg-[#dce9de] px-3 py-1.5 text-xs font-bold text-[#2d5a3d]">
+              <div className="rounded-xl bg-[#d9eef3] px-3 py-1.5 text-xs font-bold text-[#193b5a]">
                 uid: {uid}
               </div>
               <button
                 onClick={handleRun}
                 disabled={running}
-                className="rounded-xl bg-[#426a5a] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50 hover:bg-[#355747] transition-colors"
+                className="rounded-xl bg-[#193b5a] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50 hover:bg-[#193b5a] transition-colors"
               >
                 {running ? 'Running…' : results.length > 0 ? 'Run again' : 'Run tests'}
               </button>
@@ -356,7 +356,7 @@ export function FoodServiceTestPage() {
 
             {/* Summary */}
             {done && (
-              <div className={`mb-5 rounded-2xl px-5 py-4 text-sm font-bold ${failed === 0 ? 'bg-[#dce9de] text-[#2d5a3d]' : 'bg-[#f9ddd9] text-[#7c3733]'}`}>
+              <div className={`mb-5 rounded-2xl px-5 py-4 text-sm font-bold ${failed === 0 ? 'bg-[#d9eef3] text-[#193b5a]' : 'bg-[#ffe3e3] text-[#d94444]'}`}>
                 {failed === 0
                   ? `All ${passed} tests passed.`
                   : `${passed} passed · ${failed} failed`}
@@ -369,7 +369,7 @@ export function FoodServiceTestPage() {
                 {results.map((result, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-3 rounded-2xl border border-[#e5e1d5] bg-white px-4 py-3.5"
+                    className="flex items-start gap-3 rounded-2xl border border-[#c6dde5] bg-white px-4 py-3.5"
                   >
                     <span className={`mt-0.5 shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black tracking-widest ${STATUS_STYLES[result.status]}`}>
                       {STATUS_LABEL[result.status]}

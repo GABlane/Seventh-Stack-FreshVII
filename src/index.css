@@ -1,13 +1,13 @@
 @import 'tailwindcss';
 
 :root {
-  color: #1c1917;
-  background: #f8f7f2;
-  --color-primary: #426a5a;
-  --color-highlight: #f2c57c;
-  --color-border: #e5e1d5;
-  --color-success: #7fb685;
-  --color-waste: #ef6f6c;
+  color: #193b5a;
+  background: #eaf8fa;
+  --color-primary: #20c4d6;
+  --color-highlight: #ffe167;
+  --color-border: #c6dde5;
+  --color-success: #6bcb77;
+  --color-waste: #ff6b6b;
   font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
