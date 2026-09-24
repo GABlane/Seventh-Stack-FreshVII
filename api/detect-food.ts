@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
     const interaction = await ai.interactions.create({
       model: 'gemini-3.8-flash',
-      generation_config: { thinking_level: 'minimal' },
+      generation_config: { thinking_level: 'low' },
       response_format: { type: 'text', mime_type: 'application/json', schema: detectionSchema },
       input: [
         { type: 'text', text: prompt },
