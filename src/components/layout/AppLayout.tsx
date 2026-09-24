@@ -38,7 +38,7 @@ export function AppLayout() {
                 >
                   {({ isActive }) => <>
                     {primary
-                      ? <span className="flex size-12 items-center justify-center rounded-[1.1rem] border-4 border-[#eaf8fa] bg-[#193b5a] text-[#ffe167] shadow-[0_6px_15px_rgba(66,106,90,0.28)] lg:size-7 lg:rounded-lg lg:border-0 lg:bg-[#193b5a] lg:text-[#ffe167] lg:shadow-none"><Icon size={23} strokeWidth={2.5} className="lg:size-4" /></span>
+                      ? <span className="flex size-12 items-center justify-center rounded-[1.1rem] border-4 border-[#eaf8fa] bg-[#193b5a] text-[color:var(--app-accent)] shadow-[0_6px_15px_rgba(66,106,90,0.28)] lg:size-7 lg:rounded-lg lg:border-0 lg:bg-[#193b5a] lg:text-[color:var(--app-accent)] lg:shadow-none"><Icon size={23} strokeWidth={2.5} className="lg:size-4" /></span>
                       : <Icon size={20} strokeWidth={2.2} />
                     }
                     <span>{label}</span>

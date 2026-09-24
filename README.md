@@ -53,7 +53,7 @@ FRESHVII keeps a live inventory of the kitchen and turns it into action:
 | Add food | Manual entry (name, category, quantity, unit, price paid, date added, opened, storage, shelf) or a **photo scan** using Gemini. One item pre-fills the form. A photo with several items opens a review list where each item can be edited, unticked, and then all added at once. |
 | Freshness | Each item gets an estimated expiry, a freshness percentage, and one of four states: `fresh`, `use-soon`, `rescue-today`, `expired`. |
 | Food actions | On the detail page: mark as opened, move to the freezer, move to another shelf, consume a quantity, or discard. Every change is logged as an activity event. |
-| Rescue | Lists food to use today, food expiring within about 2 days, and food past its estimated expiry, with a suggested action for each and dinner ideas. |
+| Rescue | Lists food to use today, food expiring within about 2 days, and food past its estimated expiry, with a suggested action for each and dinner ideas. An **AI rescue plan** (on demand) turns those items into up to three practical ideas: what to cook, eat, or freeze, with short steps and a storage tip. |
 | Recipes | Recipes are ranked by how much they use up urgent food. Each recipe shows which ingredients are matched from the kitchen and which are missing. |
 | Cooking flow | "Cook this" walks through the recipe's matched ingredients one at a time (all / some / none used), reduces stock, and can record a leftover item. |
 | Insights | Food wasted and saved, items discarded, a most-wasted-categories bar chart, a weekly recap with a pre-grocery checklist, and most consumed, most purchased, often forgotten, and discarded foods. |
@@ -68,7 +68,7 @@ FRESHVII keeps a live inventory of the kitchen and turns it into action:
 | PWA | `vite-plugin-pwa` (auto-update service worker and manifest) |
 | Auth and data | Firebase Authentication and Cloud Firestore (real-time listeners) |
 | AI | Google Gemini through `@google/genai`, called only from a server-side function |
-| Serverless API | One Vercel Function, `api/detect-food.ts` |
+| Serverless API | Two Vercel Functions: `api/detect-food.ts` (photo scan) and `api/rescue-suggestions.ts` (AI rescue plan) |
 | Hosting and CI/CD | Vercel, deployed by a GitHub Actions workflow (`.github/workflows/vercel.yml`) |
 
 ```text
@@ -82,7 +82,7 @@ Firebase services                  src/firebase/services  (auth, food, recipe)
         |
 Firebase Auth + Cloud Firestore
 
-Browser  --POST /api/detect-food-->  Vercel Function  -->  Gemini API
+Browser  --POST /api/detect-food | /api/rescue-suggestions-->  Vercel Function  -->  Gemini API
 ```
 
 **Firestore layout**
@@ -218,6 +218,24 @@ Photo scanning is the app's AI feature. On **Add food**, the user picks or takes
 6. **Safety:** the API key stays in a server-side environment variable and is never sent to the
    browser. The model is told not to estimate an exact expiry date.
 
+### AI rescue plan
+
+On the **Rescue** page, **Get suggestions** sends the food that needs attention to Gemini and
+shows up to three ideas.
+
+1. **In the browser:** the page sends up to 15 items (name, category, quantity, unit, storage,
+   freshness state, expiry label, and whether it is opened). It only runs when the user taps
+   the button, so it never uses quota in the background.
+2. **`POST /api/rescue-suggestions`:** a Vercel Function keeps only well-formed items, caps every
+   field, and asks `gemini-3.5-flash-lite` (`thinking_level: 'low'`) for structured JSON.
+3. **Result:** a one-line summary plus suggestions, each with a title, an action (cook, eat,
+   freeze, preserve, or check), the items it uses, minutes, up to four short steps, and a tip.
+4. **Guardrails:** item names are treated as data, not instructions. The model is told never to
+   suggest eating expired food as it is, only to check it and throw it away if in doubt. The server
+   drops any "used item" that is not in the request, so the AI cannot invent ingredients from your
+   kitchen. The page shows a reminder that AI suggestions can be wrong. If the kitchen changes after
+   a plan was made, the page flags the plan as out of date.
+
 **Performance notes** (measured during development, one small test image): a live scan takes
 about 3.5 s with `gemini-3.5-flash-lite`. `gemini-3.8-flash` took 11 to 38 s and rejects the
 `minimal` thinking level. If accuracy on real photos is not good enough, change `model` in
@@ -250,8 +268,11 @@ No screenshots are committed yet. Add them under `docs/screenshots/` and link th
   wrong counts, mixed-up categories) is unproven. Items are always shown for review before saving.
   Only five categories are used, and at most 12 items are returned per photo.
 - **Gemini free tier:** the current key is limited to 5 requests per minute, so quick repeated
-  scans can be rate limited or slow.
+  scans or rescue plans can be rate limited or slow.
 - **`/api` is not available under `npm run dev`** (see [Setup instructions](#setup-instructions)).
+- **The AI endpoints are not authenticated.** `/api/detect-food` and `/api/rescue-suggestions` can be
+  called by anyone who knows the URL, which could use up the Gemini quota. Verifying the Firebase
+  sign-in token in the functions would close this.
 - **Password rules are enforced in the browser only.** Enforcing them in Firebase itself would need
   Identity Platform password policies.
 - **Recipe catalogue is small** and seeded from CSV files. There is no way to add or edit recipes in the app.

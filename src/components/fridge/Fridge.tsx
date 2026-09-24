@@ -6,10 +6,10 @@ import { FridgeShelf } from './FridgeShelf'
 import { storageZones } from '../../lib/storage-zones'
 
 const fridgeShelfPositions: Record<string, string> = {
-  'fridge-top': 'left-[12%] top-[28%] h-[20%] w-[40%]',
-  'fridge-middle': 'left-[12%] top-[45%] h-[16%] w-[40%]',
-  'fridge-crisper': 'left-[12%] top-[66%] h-[12%] w-[40%]',
-  'fridge-door': 'left-[58%] top-[22%] h-[58%] w-[31%]',
+  'fridge-top': 'left-[10%] top-[17%] h-[19%] w-[42%]',
+  'fridge-middle': 'left-[10%] top-[38%] h-[19%] w-[42%]',
+  'fridge-crisper': 'left-[10%] top-[61%] h-[16%] w-[42%]',
+  'fridge-door': 'left-[58%] top-[14%] h-[61%] w-[31%]',
 }
 
 const freezerShelfPositions: Record<string, string> = {
