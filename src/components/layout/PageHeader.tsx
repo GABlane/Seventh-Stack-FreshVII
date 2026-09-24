@@ -1,11 +1,14 @@
-import { AlertTriangle, Bell, Settings, Snowflake, Utensils } from 'lucide-react'
+import { AlertTriangle, Bell, LogOut, Snowflake, Utensils } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { logout } from '../../firebase/services/auth.service'
 import { useFoodItems } from '../../hooks/useFoodItems'
 import { useImpactEvents } from '../../hooks/useImpactEvents'
 
 export function PageHeader() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const navigate = useNavigate()
   const { items } = useFoodItems()
   const { events } = useImpactEvents()
   const expiryItems = items.filter((item) => item.quantity > 0 && ['rescue-today', 'use-soon', 'expired'].includes(item.freshness)).slice(0, 5)
@@ -21,6 +24,16 @@ export function PageHeader() {
 
   function eventIcon(type: string) {
     return type === 'moved-to-freezer' ? Snowflake : type === 'product-added' || type === 'food-opened' ? Utensils : Bell
+  }
+
+  async function handleSignOut() {
+    setIsSigningOut(true)
+    try {
+      await logout()
+      navigate('/login')
+    } finally {
+      setIsSigningOut(false)
+    }
   }
 
   return <header className="border-b border-[#cde6ed] bg-[#eefafd]">
@@ -50,7 +63,7 @@ export function PageHeader() {
             <Link to="/app/notifications" onClick={() => setIsOpen(false)} className="block border-t border-[#eeeade] px-4 py-3 text-center text-sm font-bold text-[#426a5a] hover:bg-[#f8f7f2]">View all notifications</Link>
           </div>}
         </div>
-        <Link to="/app/settings" aria-label="Account settings" title="Account settings" className="flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white hover:text-[#426a5a]"><Settings size={19} /></Link>
+        <button type="button" disabled={isSigningOut} onClick={handleSignOut} aria-label="Sign out" title="Sign out" className="flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-white hover:text-[#426a5a] disabled:cursor-wait disabled:opacity-60"><LogOut size={19} /></button>
       </div>
     </div>
   </header>
