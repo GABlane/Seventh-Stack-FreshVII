@@ -5,12 +5,13 @@ import { Button } from '../components/ui/button'
 import { useFoodContext } from '../context/FoodContext'
 import type { StorageLocation } from '../data/mockData'
 import { defaultShelfKey, storageZones } from '../lib/storage-zones'
+import { ScanReview, type ScanRow } from '../components/food/ScanReview'
 
 const today = new Date().toISOString().slice(0, 10)
 const wholeQuantityUnits = new Set(['piece', 'bag'])
-// Food recognition needs little detail, so scans are always downscaled: a small
-// upload is much faster on mobile data and gives the model less to process.
-const maxScanImageEdge = 768
+// Scans are always downscaled: a small upload is much faster on mobile data and gives the
+// model less to process. 1024 px keeps enough detail to tell several items apart.
+const maxScanImageEdge = 1024
 const scanImageQuality = 0.8
 // If a photo cannot be decoded in the browser (e.g. HEIC), it is sent as-is when
 // small enough. 3 MB becomes roughly 4 MB in base64, below Vercel Functions'
@@ -23,6 +24,8 @@ type FoodDetection = {
   subcategory: string
   condition: string
   suggestedStorage: StorageLocation
+  quantity?: number
+  unit?: string
   confidence: number
 }
 
@@ -33,6 +36,20 @@ function categoryFor(value: string) {
   if (normalized.includes('grain') || normalized.includes('bakery')) return 'Grains'
   if (normalized.includes('produce') || normalized.includes('fruit') || normalized.includes('vegetable')) return 'Produce'
   return 'Pantry'
+}
+
+const scanUnits = ['piece', 'bag', 'g', 'ml', 'pack']
+const scanLocations: StorageLocation[] = ['fridge', 'freezer', 'pantry']
+
+function scanQuantity(detection: FoodDetection) {
+  const unit = scanUnits.includes(detection.unit ?? '') ? detection.unit as string : 'piece'
+  const quantity = Number(detection.quantity)
+  const valid = Number.isFinite(quantity) && quantity > 0
+  return { unit, quantity: String(wholeQuantityUnits.has(unit) ? Math.max(1, Math.round(valid ? quantity : 1)) : valid ? quantity : 1) }
+}
+
+function scanLocation(detection: FoodDetection): StorageLocation {
+  return scanLocations.includes(detection.suggestedStorage) ? detection.suggestedStorage : 'fridge'
 }
 
 function fileAsBase64(file: Blob) {
@@ -103,6 +120,7 @@ export function AddFoodPage() {
   const [error, setError] = useState('')
   const [detection, setDetection] = useState<FoodDetection | null>(null)
   const [isDetecting, setIsDetecting] = useState(false)
+  const [scanRows, setScanRows] = useState<ScanRow[]>([])
   const scanInputRef = useRef<HTMLInputElement>(null)
   const quantityIsWhole = wholeQuantityUnits.has(unit)
 
@@ -138,21 +156,35 @@ export function AddFoodPage() {
         if (response.status === 413) throw new Error('This photo is still too large to scan. Please choose a smaller image.')
         throw new Error('Food scanning is unavailable right now. Please try again after the latest deployment, or add the item manually.')
       }
-      let payload: { detection?: FoodDetection; error?: string } = {}
+      let payload: { detections?: FoodDetection[]; detection?: FoodDetection | null; error?: string } = {}
       try {
         payload = responseText ? JSON.parse(responseText) as typeof payload : {}
       } catch {
         throw new Error('Food scanning is unavailable right now. Please try again or add the item manually.')
       }
-      if (!response.ok || !payload.detection) throw new Error(payload.error ?? 'Unable to identify that food.')
+      if (!response.ok) throw new Error(payload.error ?? 'Unable to identify that food.')
+      const detections = payload.detections ?? (payload.detection ? [payload.detection] : [])
+      if (!detections.length) throw new Error('We could not find any food in that photo. Try a clearer photo or add the item manually.')
 
-      const result = payload.detection
-      const nextLocation: StorageLocation = ['fridge', 'freezer', 'pantry'].includes(result.suggestedStorage) ? result.suggestedStorage : 'fridge'
-      setName(result.foodName)
-      setCategory(categoryFor(result.category))
-      setLocation(nextLocation)
-      setShelfKey(defaultShelfKey(nextLocation))
-      setDetection(result)
+      if (detections.length === 1) {
+        const result = detections[0]
+        const nextLocation = scanLocation(result)
+        const scanned = scanQuantity(result)
+        setScanRows([])
+        setName(result.foodName)
+        setCategory(categoryFor(result.category))
+        setLocation(nextLocation)
+        setShelfKey(defaultShelfKey(nextLocation))
+        setQuantity(scanned.quantity)
+        setUnit(scanned.unit)
+        setDetection(result)
+      } else {
+        setDetection(null)
+        setScanRows(detections.map((result, index) => {
+          const scanned = scanQuantity(result)
+          return { id: `${Date.now()}-${index}`, include: true, name: result.foodName, category: categoryFor(result.category), quantity: scanned.quantity, unit: scanned.unit, location: scanLocation(result), pricePaid: '', confidence: result.confidence }
+        }))
+      }
     } catch (scanError) {
       const message = scanError instanceof Error ? scanError.message : ''
       setError(message === 'The string did not match the expected pattern.' ? 'Your phone could not prepare that photo. Please take a new photo or choose a JPEG or PNG image.' : message || 'Unable to identify that food.')
@@ -186,6 +218,63 @@ export function AddFoodPage() {
     }
   }
 
+  const scanPanel = (
+    <div className="flex flex-col justify-between gap-3 rounded-2xl bg-[#eaf8fa] p-4 sm:flex-row sm:items-center">
+      <div>
+        <p className="font-bold">Scan your food</p>
+        <p className="text-sm text-stone-500">Photograph one item or a whole grocery haul. You can edit everything before saving.</p>
+      </div>
+      <input ref={scanInputRef} type="file" accept="image/*" capture="environment" className="sr-only" onChange={scanFood} />
+      <Button type="button" variant="outline" disabled={isDetecting} onClick={() => scanInputRef.current?.click()}><Camera size={17} /> {isDetecting ? 'Identifying...' : 'Scan food'}</Button>
+    </div>
+  )
+
+  function updateScanRow(id: string, changes: Partial<ScanRow>) {
+    setScanRows((rows) => rows.map((row) => row.id === id ? { ...row, ...changes } : row))
+  }
+
+  async function handleSubmitScanned() {
+    const selected = scanRows.filter((row) => row.include)
+    if (!selected.length) return
+    for (const row of selected) {
+      const amount = Number(row.quantity)
+      if (!row.name.trim()) return setError('Give every selected item a name, or untick it.')
+      if (!Number.isFinite(amount) || amount <= 0) return setError(`Enter a quantity for ${row.name.trim()}.`)
+      if (wholeQuantityUnits.has(row.unit) && !Number.isInteger(amount)) return setError(`${row.name.trim()} must be a whole number of ${row.unit}s.`)
+    }
+    setError('')
+    setIsSaving(true)
+    const failed: string[] = []
+    const remaining: ScanRow[] = []
+    for (const row of scanRows) {
+      if (!row.include) continue
+      try {
+        await addNewItem({
+          name: row.name.trim(),
+          category: row.category,
+          quantity: Number(row.quantity),
+          pricePaid: row.pricePaid === '' ? undefined : Number(row.pricePaid),
+          unit: row.unit,
+          storageLocation: row.location,
+          shelfKey: defaultShelfKey(row.location),
+          opened: false,
+          dateAdded: new Date(dateAdded).toISOString(),
+          estimatedExpiry: undefined,
+        })
+      } catch {
+        failed.push(row.name.trim())
+        remaining.push(row)
+      }
+    }
+    setIsSaving(false)
+    if (!failed.length) {
+      navigate('/app')
+      return
+    }
+    setScanRows(remaining)
+    setError(`Added ${selected.length - failed.length} of ${selected.length}. These could not be added, so you can try again: ${failed.join(', ')}.`)
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8">
       <Link to="/app" className="inline-flex items-center gap-2 text-sm font-bold text-[#193b5a]"><ArrowLeft size={16} /> Back to kitchen</Link>
@@ -194,15 +283,14 @@ export function AddFoodPage() {
         <h1 className="mt-2 text-4xl font-black tracking-tight text-[#193b5a]">Add food</h1>
         <p className="mt-3 max-w-xl text-stone-600">Add an item to your kitchen. Freshly will estimate when it needs attention.</p>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-[2rem] border border-[#c6dde5] bg-white p-5 shadow-[0_8px_24px_rgba(70,67,52,0.05)] sm:p-8">
-        <div className="flex flex-col justify-between gap-3 rounded-2xl bg-[#eaf8fa] p-4 sm:flex-row sm:items-center">
-          <div>
-            <p className="font-bold">Scan a label</p>
-            <p className="text-sm text-stone-500">Take a photo or choose one; you can always edit the result before saving.</p>
-          </div>
-          <input ref={scanInputRef} type="file" accept="image/*" capture="environment" className="sr-only" onChange={scanFood} />
-          <Button type="button" variant="outline" disabled={isDetecting} onClick={() => scanInputRef.current?.click()}><Camera size={17} /> {isDetecting ? 'Identifying...' : 'Scan item'}</Button>
+      {scanRows.length > 1 ? (
+        <div className="space-y-6 rounded-[2rem] border border-[#c6dde5] bg-white p-5 shadow-[0_8px_24px_rgba(70,67,52,0.05)] sm:p-8">
+          {scanPanel}
+          <ScanReview rows={scanRows} dateAdded={dateAdded} error={error} isSaving={isSaving} onRowChange={updateScanRow} onDateChange={setDateAdded} onSubmit={handleSubmitScanned} onCancel={() => { setScanRows([]); setError('') }} />
         </div>
+      ) : (
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-[2rem] border border-[#c6dde5] bg-white p-5 shadow-[0_8px_24px_rgba(70,67,52,0.05)] sm:p-8">
+        {scanPanel}
         {detection && <div className="rounded-2xl border border-[#bdebf0] bg-[#d9eef3] p-4 text-sm text-[#193b5a]"><p className="font-black">We found {detection.foodName}</p><p className="mt-1 font-semibold text-[#5b7086]">{detection.condition} · Suggested for the {detection.suggestedStorage} · {Math.round(detection.confidence * 100)}% confidence</p></div>}
         <div className="grid gap-5 sm:grid-cols-2">
           <label className="sm:col-span-2">
@@ -256,6 +344,7 @@ export function AddFoodPage() {
           <Plus size={18} /> {isSaving ? 'Adding...' : 'Add to my kitchen'}
         </Button>
       </form>
+      )}
       <p className="flex items-center gap-2 text-sm text-stone-500"><Check size={16} className="text-[#6bcb77]" /> Added food will appear in your live visual fridge.</p>
     </div>
   )
