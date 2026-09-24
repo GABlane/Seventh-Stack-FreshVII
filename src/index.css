@@ -147,6 +147,18 @@ body {
   }
 }
 
+@media (max-width: 639px) {
+  main[class*='min-h-svh'][class*='items-center'] {
+    align-items: flex-start !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  main[class*='min-h-svh'][class*='items-center'] > div {
+    overflow: visible !important;
+  }
+}
+
 body {
   margin: 0;
   min-width: 320px;
