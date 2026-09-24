@@ -126,8 +126,8 @@ and Cloud Firestore enabled.
    (`vercel dev`), or test on a deployment.
 
 4. (Optional) Seed reference and demo data. Copy `.env.seed.example` to `.env.seed` and add the
-   email and password of a demo account that already exists in your Firebase project (the
-   scripts sign in as that user and reuse the `VITE_FIREBASE_*` values from `.env`), then run:
+   email and password for the demo account (the scripts sign in as that user, creating the
+   account first if it does not exist, and reuse the `VITE_FIREBASE_*` values from `.env`), then run:
 
    ```bash
    npm run seed:all      # reference data (categories, subcategories, recipes) + demo items
