@@ -3,6 +3,7 @@ import { BarChart3, ChefHat, Home, Plus, Sparkles } from 'lucide-react'
 import { PageHeader } from './PageHeader'
 import { FoodProvider } from '../../context/FoodContext'
 import { RecipeProvider } from '../../context/RecipeContext'
+import { ThemeProvider } from '../../context/ThemeContext'
 
 const navigation = [
   { label: 'Home', to: '/app', icon: Home },
@@ -14,8 +15,9 @@ const navigation = [
 
 export function AppLayout() {
   return (
-    <FoodProvider>
-      <RecipeProvider>
+    <ThemeProvider>
+      <FoodProvider>
+        <RecipeProvider>
         <div className="flex min-h-svh flex-col bg-[#eaf8fa] text-stone-900">
           <PageHeader />
           <main className="mx-auto flex w-full max-w-6xl flex-1 px-5 py-8 pb-32 sm:px-8 lg:py-12 lg:pb-12">
@@ -31,20 +33,24 @@ export function AppLayout() {
                   className={({ isActive }) =>
                     primary
                       ? `relative -top-6 flex flex-col items-center gap-0.5 text-[11px] font-bold text-[#193b5a] transition-transform hover:-translate-y-0.5 focus-visible:outline-none lg:top-0 lg:flex-row lg:gap-2 lg:rounded-full lg:px-3 lg:py-2 lg:text-sm ${isActive ? 'lg:bg-[#d9eef3] lg:text-[#193b5a]' : 'lg:text-[#193b5a] lg:hover:bg-[#eaf2eb]'}`
-                      : `flex min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#193b5a] lg:flex-row lg:gap-2 lg:px-3 lg:text-sm ${isActive ? 'text-[#193b5a]' : 'text-stone-500 hover:text-[#193b5a]'}`
+                      : `relative flex min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[11px] font-semibold transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#193b5a] hover:-translate-y-0.5 lg:flex-row lg:gap-2 lg:px-3 lg:text-sm ${isActive ? 'text-[#193b5a]' : 'text-stone-500 hover:text-[#193b5a]'}`
                   }
                 >
-                  {primary
-                    ? <span className="flex size-12 items-center justify-center rounded-[1.1rem] border-4 border-[#eaf8fa] bg-[#193b5a] text-[#ffe167] shadow-[0_6px_15px_rgba(66,106,90,0.28)] lg:size-7 lg:rounded-lg lg:border-0 lg:bg-[#193b5a] lg:text-[#ffe167] lg:shadow-none"><Icon size={23} strokeWidth={2.5} className="lg:size-4" /></span>
-                    : <Icon size={20} strokeWidth={2.2} />
-                  }
-                  <span>{label}</span>
+                  {({ isActive }) => <>
+                    {primary
+                      ? <span className="flex size-12 items-center justify-center rounded-[1.1rem] border-4 border-[#eaf8fa] bg-[#193b5a] text-[#ffe167] shadow-[0_6px_15px_rgba(66,106,90,0.28)] lg:size-7 lg:rounded-lg lg:border-0 lg:bg-[#193b5a] lg:text-[#ffe167] lg:shadow-none"><Icon size={23} strokeWidth={2.5} className="lg:size-4" /></span>
+                      : <Icon size={20} strokeWidth={2.2} />
+                    }
+                    <span>{label}</span>
+                    {isActive && !primary && <span aria-hidden="true" className="absolute bottom-0 size-1.5 rounded-full bg-[#145d72] lg:static lg:size-1.5" />}
+                  </>}
                 </NavLink>
               ))}
             </div>
           </nav>
         </div>
-      </RecipeProvider>
-    </FoodProvider>
+        </RecipeProvider>
+      </FoodProvider>
+    </ThemeProvider>
   )
 }

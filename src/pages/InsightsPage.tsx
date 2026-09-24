@@ -1,30 +1,107 @@
-import { ChartColumnIncreasing, CircleDollarSign, Clock3, Leaf, Trash2, Utensils } from 'lucide-react'
-import { Link } from 'react-router'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { CalendarDays, Clock3, Leaf, ShoppingBasket, Trash2, Utensils } from 'lucide-react'
+import { useMemo } from 'react'
+import { Card, CardContent } from '../components/ui/card'
 import { Progress } from '../components/ui/progress'
 import { useFoodContext } from '../context/FoodContext'
+import type { FoodEvent, FoodItemRecord } from '../domain/food'
 import { FoodIcon } from '../lib/food-icons'
 
-const money = (amount: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount)
-const amount = (value: number) => Number.isInteger(value) ? String(value) : value.toFixed(1)
+const number = (value: number) => Number.isInteger(value) ? String(value) : value.toFixed(1)
+
+type Quantity = { value: number; unit: string }
+
+function eventQuantity(event: FoodEvent, item?: FoodItemRecord): Quantity {
+  if (event.type === 'discarded') return { value: Math.abs(Number(event.quantityBefore ?? item?.quantity ?? 0)), unit: item?.unit ?? 'item' }
+  if (event.type === 'consumed') return { value: Math.abs(Number(event.quantityChange ?? 0)), unit: item?.unit ?? 'item' }
+  return { value: Math.abs(Number(event.quantityAfter ?? 0)), unit: item?.unit ?? 'item' }
+}
+
+function quantityTotal(events: FoodEvent[], byId: Map<string, FoodItemRecord>, type: FoodEvent['type']): Quantity {
+  const totals = new Map<string, number>()
+  events.filter((event) => event.type === type).forEach((event) => {
+    const quantity = eventQuantity(event, byId.get(event.foodItemId))
+    totals.set(quantity.unit, (totals.get(quantity.unit) ?? 0) + quantity.value)
+  })
+  const [unit, value] = [...totals.entries()].sort((a, b) => b[1] - a[1])[0] ?? ['item', 0]
+  return { unit, value }
+}
+
+function recent(events: FoodEvent[], days = 7) {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+  return events.filter((event) => new Date(event.createdAt).getTime() >= cutoff)
+}
+
+function Metric({ label, value, detail, icon, tone = 'blue' }: { label: string; value: string; detail: string; icon: React.ReactNode; tone?: 'blue' | 'red' | 'green' }) {
+  return <Card className="border-[#cde6ed] shadow-none"><CardContent className="p-3"><div className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.16em] ${tone === 'red' ? 'text-[#ee5c63]' : tone === 'green' ? 'text-[#426a5a]' : 'text-[#145d72]'}`}>{icon}{label}</div><p className="mt-2 text-lg font-black text-[#173d4e]">{value}</p><p className="mt-1 text-[9px] text-[#6f8b95]">{detail}</p></CardContent></Card>
+}
+
+function EmptyRow({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-xl bg-[#e8f7fa] px-3 py-2 text-xs font-semibold text-[#6f8b95]">{children}</div>
+}
 
 export function InsightsPage() {
   const { items, rawItems, events, loading } = useFoodContext()
-  const byId = new Map(rawItems.map((item) => [item.id, item]))
-  const consumed = new Map<string, { id: string; name: string; category: string; unit: string; quantity: number }>()
-  for (const event of events.filter((entry) => entry.type === 'consumed')) {
-    const quantity = Math.abs(Number(event.quantityChange ?? 0)); if (!quantity) continue
-    const item = byId.get(event.foodItemId); const previous = consumed.get(event.foodItemId)
-    consumed.set(event.foodItemId, { id: event.foodItemId, name: item?.name ?? 'Unknown food', category: item?.category ?? 'Pantry', unit: item?.unit ?? '', quantity: (previous?.quantity ?? 0) + quantity })
-  }
-  const favourites = [...consumed.values()].sort((a, b) => b.quantity - a.quantity).slice(0, 4)
-  const largest = favourites[0]?.quantity ?? 1
-  const useById = new Map(favourites.map((food) => [food.id, food.quantity]))
-  const rare = [...items].sort((a, b) => (useById.get(a.id) ?? 0) - (useById.get(b.id) ?? 0) || a.dateAdded.localeCompare(b.dateAdded)).slice(0, 4)
-  const wasted = events.filter((entry) => entry.type === 'discarded').map((event) => ({ event, item: byId.get(event.foodItemId) })).sort((a, b) => b.event.createdAt.localeCompare(a.event.createdAt))
-  const wasteCost = wasted.reduce((total, { event }) => total + Number(event.metadata?.estimatedWasteCost ?? 0), 0)
+  const byId = useMemo(() => new Map(rawItems.map((item) => [item.id, item])), [rawItems])
+  const weekEvents = useMemo(() => recent(events), [events])
+  const consumedEvents = events.filter((event) => event.type === 'consumed')
+  const discardedEvents = events.filter((event) => event.type === 'discarded')
+  const consumedTotal = quantityTotal(consumedEvents, byId, 'consumed')
+  const discardedTotal = quantityTotal(discardedEvents, byId, 'discarded')
+  const weeklyDiscarded = weekEvents.filter((event) => event.type === 'discarded')
+  const weeklyConsumed = weekEvents.filter((event) => event.type === 'consumed')
+  const weeklyDiscardedTotal = quantityTotal(weeklyDiscarded, byId, 'discarded')
 
-  return <div className="w-full max-w-5xl space-y-6"><section className="rounded-[2rem] bg-[#193b5a] p-5 text-white sm:p-7"><div className="flex gap-4"><span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#ffe167] text-[#193b5a]"><ChartColumnIncreasing size={24} /></span><div><p className="text-xs font-black uppercase tracking-[0.15em] text-[#ffe167]">Kitchen analytics</p><h1 className="mt-1 text-3xl font-black sm:text-4xl">Your food insights</h1><p className="mt-2 text-sm font-medium text-[#d9eef3]">What you use, what sits, and the cost of food not rescued.</p></div></div></section>{loading ? <Card><CardContent className="p-10 text-center text-sm font-semibold text-[#6f8b95]">Loading your kitchen insights...</CardContent></Card> : <><div className="grid gap-4 lg:grid-cols-2"><Card><CardHeader><div className="flex items-center justify-between"><div><CardTitle>Most consumed</CardTitle><CardDescription>Based on logged consumption.</CardDescription></div><Utensils className="text-[#193b5a]" /></div></CardHeader><CardContent className="space-y-4">{favourites.length ? favourites.map((food) => <div key={food.id} className="flex items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#eaf8fa] text-[#193b5a]"><FoodIcon name={food.name} category={food.category} size={20} /></span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="truncate text-sm font-black">{food.name}</p><p className="text-xs font-bold text-[#193b5a]">{amount(food.quantity)} {food.unit}</p></div><Progress value={food.quantity / largest * 100} className="mt-2" /></div></div>) : <Empty icon={<Utensils size={20} />} text="Log food you use to see favourites." />}</CardContent></Card><Card><CardHeader><div className="flex items-center justify-between"><div><CardTitle>Rarely eaten</CardTitle><CardDescription>Active food with the least use so far.</CardDescription></div><Clock3 className="text-[#a76f00]" /></div></CardHeader><CardContent className="space-y-2">{rare.length ? rare.map((item) => <Link key={item.id} to={`/app/food/${item.id}`} className="flex items-center gap-3 rounded-2xl bg-[#f6fcfd] p-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#193b5a]"><FoodIcon name={item.name} category={item.category} size={20} /></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{item.name}</p><p className="text-xs font-semibold text-[#6f8b95]">{useById.get(item.id) ? `${amount(useById.get(item.id) ?? 0)} ${item.unit} used` : 'Not used yet'}</p></div><Leaf size={17} className="text-[#6bcb77]" /></Link>) : <Empty icon={<Clock3 size={20} />} text="Add food to find items needing attention." />}</CardContent></Card></div><Card className="overflow-hidden"><CardContent className="grid gap-5 p-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:p-6"><span className="flex size-14 items-center justify-center rounded-2xl bg-[#ffe3e3] text-[#d94444]"><Trash2 size={25} /></span><div><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[#d94444]"><CircleDollarSign size={15} /> Food waste cost</p><h2 className="mt-1 text-3xl font-black">{money(wasteCost)}</h2><p className="mt-1 text-sm font-medium text-[#6f8b95]">{wasted.length ? `${wasted.length} discarded item${wasted.length === 1 ? '' : 's'} recorded.` : 'No discarded food recorded yet.'}</p></div><p className="rounded-2xl bg-[#eaf8fa] px-4 py-3 text-center text-sm font-bold text-[#193b5a]">{wasted.length} wasted</p></CardContent>{wasted.length > 0 && <div className="border-t border-[#c6dde5] bg-[#f6fcfd] p-5"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#6f8b95]">Foods wasted</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{wasted.map(({ event, item }) => <div key={event.id} className="flex items-center gap-3 rounded-2xl bg-white p-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#ffe3e3] text-[#d94444]"><FoodIcon name={item?.name ?? 'Food'} category={item?.category} size={18} /></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{item?.name ?? 'Unknown food'}</p><p className="text-xs font-semibold text-[#6f8b95]">Discarded</p></div><p className="text-sm font-black text-[#d94444]">{money(Number(event.metadata?.estimatedWasteCost ?? 0))}</p></div>)}</div></div>}</Card></>}</div>
+  const consumed = new Map<string, Quantity & { id: string; name: string; category: string }>()
+  consumedEvents.forEach((event) => {
+    const item = byId.get(event.foodItemId); const quantity = eventQuantity(event, item); const previous = consumed.get(event.foodItemId)
+    consumed.set(event.foodItemId, { id: event.foodItemId, name: item?.name ?? 'Unknown food', category: item?.category ?? 'Pantry', unit: quantity.unit, value: (previous?.value ?? 0) + quantity.value })
+  })
+  const mostConsumed = [...consumed.values()].sort((a, b) => b.value - a.value).slice(0, 4)
+  const largestConsumed = mostConsumed[0]?.value ?? 1
+
+  const purchased = new Map<string, { name: string; category: string; count: number }>()
+  events.filter((event) => event.type === 'added').forEach((event) => {
+    const item = byId.get(event.foodItemId); if (!item) return
+    const previous = purchased.get(item.name.toLowerCase())
+    purchased.set(item.name.toLowerCase(), { name: item.name, category: item.category, count: (previous?.count ?? 0) + 1 })
+  })
+  const mostPurchased = [...purchased.values()].sort((a, b) => b.count - a.count).slice(0, 5)
+  const consumedIds = new Set(consumed.keys())
+  const forgotten = items.filter((item) => !consumedIds.has(item.id)).sort((a, b) => a.dateAdded.localeCompare(b.dateAdded)).slice(0, 3)
+  const discarded = discardedEvents.map((event) => ({ event, item: byId.get(event.foodItemId) })).filter(({ item }) => item).sort((a, b) => b.event.createdAt.localeCompare(a.event.createdAt)).slice(0, 3)
+  const wasteByCategory = new Map<string, Quantity>()
+  discardedEvents.forEach((event) => { const item = byId.get(event.foodItemId); const quantity = eventQuantity(event, item); if (!item) return; const previous = wasteByCategory.get(item.category); wasteByCategory.set(item.category, { unit: quantity.unit, value: (previous?.value ?? 0) + quantity.value }) })
+  const wastedCategories = [...wasteByCategory.entries()].sort((a, b) => b[1].value - a[1].value).slice(0, 3)
+  const largestWaste = wastedCategories[0]?.[1].value ?? 1
+  const attentionItems = items.filter((item) => item.freshness === 'expired' || item.freshness === 'use-soon').slice(0, 3)
+
+  if (loading) return <div className="w-full rounded-3xl border border-[#cde6ed] bg-white p-10 text-center text-sm font-semibold text-[#6f8b95]">Building your insights...</div>
+
+  return <div className="-mx-5 -my-8 min-h-full w-[calc(100%+2.5rem)] space-y-4 bg-[#eefafd] px-5 py-5 pb-8 sm:-mx-8 sm:-my-12 sm:w-[calc(100%+4rem)] sm:space-y-5 sm:px-8 sm:py-8">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <Metric label="Food wasted" value={`${number(discardedTotal.value)} ${discardedTotal.unit}`} detail="estimated weight" icon={<Trash2 size={11} />} tone="red" />
+      <Metric label="Items discarded" value={String(discardedEvents.length)} detail="thrown away" icon={<Trash2 size={11} />} tone="red" />
+      <Metric label="Food saved" value={`${number(consumedTotal.value)} ${consumedTotal.unit}`} detail="eaten, estimated weight" icon={<Leaf size={11} />} tone="green" />
+    </div>
+
+    <section className="rounded-2xl border border-[#cde6ed] bg-white p-4 sm:p-5"><div className="flex items-start justify-between"><div><h2 className="text-sm font-black text-[#173d4e]">Weekly recap</h2><p className="text-[10px] text-[#6f8b95]">The last 7 days.</p></div><CalendarDays size={16} className="text-[#145d72]" /></div><div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-3"><MiniStat label="Items saved" value={String(weeklyConsumed.length)} /><MiniStat label="Items that expired" value={String(items.filter((item) => item.freshness === 'expired').length)} /><MiniStat label="Food wasted" value={`${number(weeklyDiscardedTotal.value)} ${weeklyDiscardedTotal.unit}`} /></div><p className="mt-3 text-[10px] font-bold text-[#173d4e]">Before your next grocery run, check these items:</p><div className="mt-2 space-y-1.5">{attentionItems.length ? attentionItems.map((item) => <div key={item.id} className="flex items-center justify-between rounded-xl bg-[#f7fcfd] px-3 py-2 text-[10px] font-bold text-[#173d4e]"><span className="flex items-center gap-2"><FoodIcon name={item.name} category={item.category} size={15} />{item.name}</span><span className="text-[9px] text-[#a76f00]">{item.freshness === 'expired' ? 'Expired' : item.expires}</span></div>) : <EmptyRow>Your kitchen is in good shape.</EmptyRow>}</div></section>
+
+    <section className="rounded-2xl border border-[#cde6ed] bg-white p-4 sm:p-5"><div className="flex items-start justify-between"><div><h2 className="text-sm font-black text-[#173d4e]">Most wasted categories</h2><p className="text-[10px] text-[#6f8b95]">Estimated weight of discarded food.</p></div><Trash2 size={16} className="text-[#ee5c63]" /></div><div className="mt-3 space-y-2">{wastedCategories.length ? wastedCategories.map(([category, quantity]) => <div key={category} className="flex items-center gap-3 text-[10px] font-bold text-[#173d4e]"><span className="w-20 shrink-0">{category}</span><div className="h-3 flex-1 rounded-sm bg-[#e8f7fa]"><div className="h-full rounded-sm bg-[#145d72]" style={{ width: `${quantity.value / largestWaste * 100}%` }} /></div><span className="w-20 text-[9px] text-[#6f8b95]">{number(quantity.value)} {quantity.unit}</span></div>) : <EmptyRow>No discarded categories yet.</EmptyRow>}</div></section>
+
+    <div className="grid gap-4 lg:grid-cols-2"><InsightList title="Most consumed" description="Based on logged consumption." icon={<Utensils size={16} />}>
+      {mostConsumed.length ? mostConsumed.map((food) => <div key={food.id} className="flex items-center gap-2"><span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#e8f7fa] text-[#145d72]"><FoodIcon name={food.name} category={food.category} size={14} /></span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2 text-[10px] font-bold text-[#173d4e]"><span className="truncate">{food.name}</span><span>{number(food.value)} {food.unit}</span></div><Progress value={food.value / largestConsumed * 100} className="mt-1" /></div></div>) : <EmptyRow>No consumed food yet.</EmptyRow>}
+    </InsightList><InsightList title="Most purchased" description="Foods you add to your kitchen most often." icon={<ShoppingBasket size={16} />}>
+      {mostPurchased.length ? mostPurchased.map((food) => <div key={food.name} className="flex items-center justify-between rounded-xl bg-[#e8f7fa] px-3 py-2 text-[10px] font-bold text-[#173d4e]"><span className="flex items-center gap-2"><FoodIcon name={food.name} category={food.category} size={14} />{food.name}</span><span>{food.count} time{food.count === 1 ? '' : 's'}</span></div>) : <EmptyRow>No purchases recorded yet.</EmptyRow>}
+    </InsightList></div>
+
+    <div className="grid gap-4 lg:grid-cols-2"><InsightList title="Often forgotten" description="Food in your kitchen with the least use so far." icon={<Clock3 size={16} />}>
+      {forgotten.length ? forgotten.map((item) => <div key={item.id} className="flex items-center justify-between rounded-xl bg-[#e8f7fa] px-3 py-2 text-[10px] font-bold text-[#173d4e]"><span className="flex items-center gap-2"><FoodIcon name={item.name} category={item.category} size={14} />{item.name}</span><Leaf size={13} className="text-[#62c877]" /></div>) : <EmptyRow>Everything has been used recently.</EmptyRow>}
+    </InsightList><InsightList title="Discarded food" description={`${discardedEvents.length} items thrown away, newest first.`} icon={<Trash2 size={16} />}>
+      {discarded.length ? discarded.map(({ event, item }) => <div key={event.id} className="flex items-center gap-2 rounded-xl bg-[#e8f7fa] px-3 py-2 text-[10px] font-bold text-[#173d4e]"><FoodIcon name={item!.name} category={item!.category} size={14} />{item!.name}</div>) : <EmptyRow>No discarded food yet.</EmptyRow>}
+    </InsightList></div>
+  </div>
 }
 
-function Empty({ icon, text }: { icon: React.ReactNode; text: string }) { return <div className="flex min-h-36 flex-col items-center justify-center rounded-2xl border border-dashed border-[#ddd7c8] text-center text-sm font-semibold text-[#6f8b95]"><span className="mb-3 text-[#6bcb77]">{icon}</span>{text}</div> }
+function MiniStat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-[#e8f7fa] px-3 py-2"><p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#6f8b95]">{label}</p><p className="mt-1 text-sm font-black text-[#173d4e]">{value}</p></div> }
+
+function InsightList({ title, description, icon, children }: { title: string; description: string; icon: React.ReactNode; children: React.ReactNode }) { return <section className="rounded-2xl border border-[#cde6ed] bg-white p-4 sm:p-5"><div className="flex items-start justify-between"><div><h2 className="text-sm font-black text-[#173d4e]">{title}</h2><p className="text-[10px] text-[#6f8b95]">{description}</p></div><span className="text-[#145d72]">{icon}</span></div><div className="mt-3 space-y-2">{children}</div></section> }
