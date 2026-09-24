@@ -1,7 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { calculateFreshness } from '../domain/freshness'
 import type { FoodItemRecord } from '../domain/food'
-import type { AIRecipe, InventoryItem } from '../../api/recommend-recipes'
+export type InventoryItem = {
+  name: string
+  quantity: number
+  unit: string
+  location: string
+  freshnessState?: string
+}
+
+type AIRecipe = {
+  id: string
+  title: string
+  description: string
+  cookTimeMinutes: number
+  usedIngredients: string[]
+  otherIngredients: string[]
+  rescueLabel: string
+}
 import { useRecipeContext } from '../context/RecipeContext'
 import { computeRescueRecommendations } from '../domain/rescue'
 import type { RescueRecipeResult } from '../domain/rescue'

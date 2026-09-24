@@ -22,16 +22,7 @@ const recommendationSchema = {
   required: ['recipes'],
 }
 
-type RawRecipe = {
-  title: string
-  description: string
-  cookTimeMinutes: number
-  usedIngredients: string[]
-  otherIngredients: string[]
-  rescueLabel: string
-}
-
-export type AIRecipe = {
+type AIRecipe = {
   id: string
   title: string
   description: string
@@ -41,7 +32,7 @@ export type AIRecipe = {
   rescueLabel: string
 }
 
-export type InventoryItem = {
+type InventoryItem = {
   name: string
   quantity: number
   unit: string
@@ -117,9 +108,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json() as { items?: unknown }
     const items: InventoryItem[] = Array.isArray(body.items)
-      ? (body.items as InventoryItem[]).filter(
-          (i) => i && typeof i.name === 'string' && i.name.trim().length > 0,
-        )
+      ? (body.items as InventoryItem[]).filter((i) => i && typeof i.name === 'string' && i.name.trim().length > 0)
       : []
 
     if (items.length === 0) {
