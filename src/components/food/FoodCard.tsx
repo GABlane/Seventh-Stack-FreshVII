@@ -6,7 +6,7 @@ import { FreshnessProgress } from './FreshnessProgress'
 
 export function FoodCard({ item }: { item: FoodItem }) {
   return (
-    <Link to={`/app/food/${item.id}`} className="group flex min-h-36 flex-col justify-between rounded-3xl border border-[#e5e1d5] bg-white p-4 shadow-[0_8px_24px_rgba(70,67,52,0.05)] transition-transform hover:-translate-y-1">
+    <Link to={`/app/food/${item.id}`} className="group flex min-h-36 flex-col justify-between rounded-3xl border border-[#c6dde5] bg-white p-4 shadow-[0_8px_24px_rgba(70,67,52,0.05)] transition-transform hover:-translate-y-1">
       <div className="flex items-start justify-between gap-3">
         <div className="flex size-11 items-center justify-center rounded-2xl" style={{ backgroundColor: item.accent }}><PackageOpen size={21} className="text-stone-700" /></div>
         <FreshnessBadge state={item.freshness} />

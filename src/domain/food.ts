@@ -8,7 +8,7 @@ export const measurementUnits = ['piece', 'g', 'kg', 'ml', 'l', 'bag', 'pack', '
 export type MeasurementUnit = (typeof measurementUnits)[number] | (string & {})
 
 export type FoodStatus = 'active' | 'consumed' | 'discarded'
-export type FoodEventType = 'added' | 'opened' | 'frozen' | 'unfrozen' | 'consumed' | 'discarded' | 'edited' | 'leftover-created'
+export type FoodEventType = 'added' | 'opened' | 'frozen' | 'unfrozen' | 'moved' | 'consumed' | 'discarded' | 'edited' | 'leftover-created'
 
 export type FoodItemRecord = {
   id: string
@@ -24,6 +24,9 @@ export type FoodItemRecord = {
   openedDate?: string
   frozenDate?: string
   estimatedExpiry?: string
+  imageUrl?: string
+  pricePaid?: number
+  initialQuantity?: number
   freshnessState?: FreshnessState
   status: FoodStatus
   notes?: string
@@ -82,7 +85,7 @@ function eventFor(item: FoodItemRecord, type: FoodEventType, at: string, details
 export function createFoodItem(input: Omit<FoodItemRecord, 'status' | 'createdAt' | 'updatedAt'> & { addedAt?: Date | string }): LifecycleResult {
   assertQuantity(input.quantity)
   const at = iso(input.addedAt ?? input.dateAdded)
-  const item: FoodItemRecord = { ...input, dateAdded: iso(input.dateAdded), status: 'active', createdAt: at, updatedAt: at }
+  const item: FoodItemRecord = { ...input, initialQuantity: input.initialQuantity ?? input.quantity, dateAdded: iso(input.dateAdded), status: 'active', createdAt: at, updatedAt: at }
   return { item, event: eventFor(item, 'added', at, { quantityAfter: item.quantity }) }
 }
 
@@ -108,6 +111,38 @@ export function unfreezeFood(item: FoodItemRecord, at: Date | string, location: 
   return { item: updated, event: eventFor(item, 'unfrozen', unfrozenAt, { metadata: { nextLocation: location } }) }
 }
 
+export function moveFood(
+  item: FoodItemRecord,
+  location: StorageLocation,
+  shelfKey: string,
+  at: Date | string,
+): LifecycleResult {
+  assertActive(item)
+  const movedAt = iso(at)
+
+  if (location === 'freezer' && item.storageLocation !== 'freezer') {
+    const { item: frozen } = freezeFood(item, movedAt)
+    return {
+      item: { ...frozen, shelfKey },
+      event: eventFor(item, 'moved', movedAt, { metadata: { previousLocation: item.storageLocation, nextLocation: location, shelfKey } }),
+    }
+  }
+
+  if (item.storageLocation === 'freezer' && location !== 'freezer') {
+    const { item: unfrozen } = unfreezeFood(item, movedAt, location)
+    return {
+      item: { ...unfrozen, shelfKey },
+      event: eventFor(item, 'moved', movedAt, { metadata: { previousLocation: item.storageLocation, nextLocation: location, shelfKey } }),
+    }
+  }
+
+  const updated = { ...item, storageLocation: location, shelfKey, updatedAt: movedAt }
+  return {
+    item: updated,
+    event: eventFor(item, 'moved', movedAt, { metadata: { previousLocation: item.storageLocation, nextLocation: location, shelfKey } }),
+  }
+}
+
 export function consumeFood(item: FoodItemRecord, quantityUsed: number, at: Date | string): ConsumptionResult {
   assertActive(item)
   assertQuantity(quantityUsed, 'Consumed quantity')
@@ -122,7 +157,9 @@ export function discardFood(item: FoodItemRecord, at: Date | string): LifecycleR
   assertActive(item)
   const discardedAt = iso(at)
   const updated: FoodItemRecord = { ...item, status: 'discarded', updatedAt: discardedAt, archivedAt: discardedAt }
-  return { item: updated, event: eventFor(item, 'discarded', discardedAt, { quantityBefore: item.quantity, quantityAfter: 0 }) }
+  const proportionDiscarded = item.initialQuantity && item.initialQuantity > 0 ? item.quantity / item.initialQuantity : 1
+  const estimatedWasteCost = Number(((item.pricePaid ?? 0) * proportionDiscarded).toFixed(2))
+  return { item: updated, event: eventFor(item, 'discarded', discardedAt, { quantityBefore: item.quantity, quantityAfter: 0, metadata: { estimatedWasteCost } }) }
 }
 
 export function createLeftover(item: FoodItemRecord, quantity: number, at: Date | string): ConsumptionResult {

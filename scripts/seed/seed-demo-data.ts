@@ -1,17 +1,10 @@
 import { parse } from 'csv-parse/sync'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import {
-  writeBatch,
-  doc,
-  collection,
-  getDocs,
-  Timestamp,
-} from 'firebase/firestore'
-import { db, auth, signInAsDemo } from '../firebase-admin.js'
+import { collection, doc, getDocs, writeBatch } from 'firebase/firestore'
+import { auth, db, signInAsDemo } from '../firebase-admin.js'
 
-const CSV = (name: string) =>
-  readFileSync(resolve(import.meta.dirname, 'csv', name), 'utf8')
+const CSV = (name: string) => readFileSync(resolve(import.meta.dirname, 'csv', name), 'utf8')
 
 type DemoItemRow = {
   id: string
@@ -20,7 +13,7 @@ type DemoItemRow = {
   subcategory_id: string
   quantity: string
   unit: string
-  storage: string
+  storage: 'fridge' | 'freezer' | 'pantry'
   days_added: string
   days_opened: string
   days_frozen: string
@@ -28,122 +21,121 @@ type DemoItemRow = {
   purchase_price: string
 }
 
-function daysAgo(now: Date, days: number): Timestamp {
-  const d = new Date(now)
-  d.setDate(d.getDate() - days)
-  return Timestamp.fromDate(d)
+const categoryNames: Record<string, string> = {
+  produce: 'Produce', dairy: 'Dairy & eggs', meat: 'Meat', grains: 'Grains', pantry: 'Pantry',
 }
 
-function daysFromNow(now: Date, days: number): Timestamp {
-  const d = new Date(now)
-  d.setDate(d.getDate() + days)
-  return Timestamp.fromDate(d)
+const consumedAmounts: Record<string, number> = {
+  'demo-tomatoes': 3, 'demo-milk': 300, 'demo-eggs': 6,
 }
 
-const SHELF_LIFE: Record<string, { closed: number; opened: number; freezer: number }> = {
-  produce: { closed: 7,   opened: 3,  freezer: 90  },
-  dairy:   { closed: 14,  opened: 5,  freezer: 60  },
-  meat:    { closed: 3,   opened: 2,  freezer: 90  },
-  grains:  { closed: 180, opened: 60, freezer: 365 },
-  pantry:  { closed: 180, opened: 60, freezer: 365 },
+function isoDaysAgo(now: Date, days: number) {
+  const date = new Date(now)
+  date.setDate(date.getDate() - days)
+  return date.toISOString()
 }
 
-function resolveUseBy(row: DemoItemRow, now: Date): Timestamp {
-  // Leftover items expire today regardless of category shelf life
-  if (row.is_leftover === 'true') return daysFromNow(now, 0)
-
-  const life = SHELF_LIFE[row.category_id] ?? { closed: 7, opened: 3, freezer: 90 }
-
-  if (row.days_frozen) {
-    const frozenDate = new Date(now)
-    frozenDate.setDate(frozenDate.getDate() - Number(row.days_frozen) + life.freezer)
-    return Timestamp.fromDate(frozenDate)
-  }
-
-  if (row.days_opened) {
-    const openedDate = new Date(now)
-    openedDate.setDate(openedDate.getDate() - Number(row.days_opened) + life.opened)
-    return Timestamp.fromDate(openedDate)
-  }
-
-  const addedDate = new Date(now)
-  addedDate.setDate(addedDate.getDate() - Number(row.days_added) + life.closed)
-  return Timestamp.fromDate(addedDate)
+function shelfFor(storage: DemoItemRow['storage']) {
+  if (storage === 'freezer') return 'freezer-top'
+  if (storage === 'pantry') return 'pantry-eye-level'
+  return 'fridge-middle'
 }
 
-async function deleteExistingItems(uid: string) {
-  const snap = await getDocs(collection(db, `profiles/${uid}/items`))
-  if (snap.empty) return
+function appUnit(unit: string) {
+  return unit === 'pcs' ? 'piece' : unit
+}
+
+async function deleteCollection(uid: string, name: 'items' | 'activity') {
+  const snapshot = await getDocs(collection(db, `profiles/${uid}/${name}`))
+  if (snapshot.empty) return
   const batch = writeBatch(db)
-  snap.docs.forEach((d) => batch.delete(d.ref))
+  snapshot.docs.forEach((document) => batch.delete(document.ref))
   await batch.commit()
-  console.log(`  Deleted ${snap.size} existing items for ${uid}`)
+  console.log(`  Deleted ${snapshot.size} existing ${name}`)
 }
 
 export async function seedDemoData(reset = false) {
-  console.log('\n--- Seeding demo data ---')
+  console.log('\n--- Seeding Freshly demo data ---')
   const uid = await signInAsDemo()
   console.log(`  Signed in as uid: ${uid}`)
 
+  if (reset) {
+    await deleteCollection(uid, 'items')
+    await deleteCollection(uid, 'activity')
+  }
+
   const now = new Date()
   const rows = parse(CSV('demo_items.csv'), { columns: true, skip_empty_lines: true }) as DemoItemRow[]
-
-  if (reset) await deleteExistingItems(uid)
-
-  // Upsert profile
-  const profileRef = doc(collection(db, 'profiles'), uid)
-  const profileBatch = writeBatch(db)
-  profileBatch.set(profileRef, { id: uid, name: 'Demo User', created_at: Timestamp.fromDate(now) }, { merge: true })
-  await profileBatch.commit()
-  console.log(`  profile: ${uid}`)
-
-  // Build and batch-write items
   const batch = writeBatch(db)
-  for (const row of rows) {
-    const purchaseDate = daysAgo(now, Number(row.days_added))
-    const openedAt = row.days_opened ? daysAgo(now, Number(row.days_opened)) : null
-    const frozenAt = row.days_frozen ? daysAgo(now, Number(row.days_frozen)) : null
-    const useBy = resolveUseBy(row, now)
+  batch.set(doc(db, `profiles/${uid}`), { id: uid, updatedAt: now.toISOString() }, { merge: true })
 
-    const itemDoc: Record<string, unknown> = {
+  for (const row of rows) {
+    const quantity = Number(row.quantity)
+    const previouslyConsumed = consumedAmounts[row.id] ?? 0
+    const dateAdded = isoDaysAgo(now, Number(row.days_added))
+    const openedDate = row.days_opened ? isoDaysAgo(now, Number(row.days_opened)) : undefined
+    const frozenDate = row.days_frozen ? isoDaysAgo(now, Number(row.days_frozen)) : undefined
+    const item = {
       id: row.id,
       name: row.name,
-      category_id: row.category_id,
+      category: categoryNames[row.category_id] ?? 'Pantry',
       subcategory_id: row.subcategory_id,
-      quantity: Number(row.quantity),
-      unit: row.unit,
-      storage: row.storage,
-      purchase_date: purchaseDate,
-      use_by: useBy,
-      status: 'active',
-      is_leftover: row.is_leftover === 'true',
-      purchase_price: Number(row.purchase_price),
-      created_at: purchaseDate,
+      quantity,
+      initialQuantity: quantity + previouslyConsumed,
+      unit: appUnit(row.unit),
+      storageLocation: row.storage,
+      shelfKey: shelfFor(row.storage),
+      opened: Boolean(openedDate),
+      dateAdded,
+      openedDate,
+      frozenDate,
+      pricePaid: Number(row.purchase_price),
+      status: 'active' as const,
+      notes: row.is_leftover === 'true' ? 'Created from a leftover portion.' : undefined,
+      createdAt: dateAdded,
+      updatedAt: now.toISOString(),
     }
 
-    if (openedAt) itemDoc.opened_at = openedAt
-    if (frozenAt) itemDoc.frozen_at = frozenAt
+    batch.set(doc(db, `profiles/${uid}/items/${row.id}`), Object.fromEntries(Object.entries(item).filter(([, value]) => value !== undefined)))
+    batch.set(doc(db, `profiles/${uid}/activity/${row.id}-added`), {
+      id: `${row.id}-added`, foodItemId: row.id, type: 'added', quantityAfter: item.initialQuantity, createdAt: dateAdded,
+    })
 
-    batch.set(doc(collection(db, `profiles/${uid}/items`), row.id), itemDoc)
-    console.log(`  item: ${row.id} (${row.name})`)
+    if (previouslyConsumed) {
+      batch.set(doc(db, `profiles/${uid}/activity/${row.id}-consumed`), {
+        id: `${row.id}-consumed`, foodItemId: row.id, type: 'consumed', quantityBefore: item.initialQuantity, quantityChange: -previouslyConsumed, quantityAfter: quantity, createdAt: isoDaysAgo(now, 1),
+      })
+    }
+  }
+
+  const discardedItems = [
+    { id: 'demo-wasted-spinach', name: 'Baby Spinach', category: 'Produce', quantity: 1, unit: 'bag', pricePaid: 65, daysAdded: 9, daysDiscarded: 2 },
+    { id: 'demo-wasted-bread', name: 'Whole Wheat Bread', category: 'Grains', quantity: 1, unit: 'pack', pricePaid: 85, daysAdded: 12, daysDiscarded: 4 },
+  ]
+
+  for (const item of discardedItems) {
+    const dateAdded = isoDaysAgo(now, item.daysAdded)
+    const discardedAt = isoDaysAgo(now, item.daysDiscarded)
+    batch.set(doc(db, `profiles/${uid}/items/${item.id}`), {
+      ...item, initialQuantity: item.quantity, storageLocation: 'fridge', shelfKey: 'fridge-crisper', opened: false,
+      dateAdded, status: 'discarded', createdAt: dateAdded, updatedAt: discardedAt, archivedAt: discardedAt,
+    })
+    batch.set(doc(db, `profiles/${uid}/activity/${item.id}-added`), {
+      id: `${item.id}-added`, foodItemId: item.id, type: 'added', quantityAfter: item.quantity, createdAt: dateAdded,
+    })
+    batch.set(doc(db, `profiles/${uid}/activity/${item.id}-discarded`), {
+      id: `${item.id}-discarded`, foodItemId: item.id, type: 'discarded', quantityBefore: item.quantity, quantityAfter: 0, metadata: { estimatedWasteCost: item.pricePaid }, createdAt: discardedAt,
+    })
   }
 
   await batch.commit()
-  console.log(`Demo items: ${rows.length} documents written to profiles/${uid}/items`)
-
+  console.log(`  Wrote ${rows.length} active items, ${discardedItems.length} discarded items, and activity history.`)
   await auth.signOut()
 }
 
-// Allow running directly
 if (process.argv[1] === import.meta.filename) {
   const reset = process.argv.includes('--reset')
   seedDemoData(reset)
-    .then(() => {
-      console.log('\nDemo data seeding complete.')
-      process.exit(0)
-    })
-    .catch((err) => {
-      console.error(err)
-      process.exit(1)
-    })
+    .then(() => { console.log('\nDemo data seeding complete.') })
+    .catch((error) => { console.error(error); process.exitCode = 1 })
 }

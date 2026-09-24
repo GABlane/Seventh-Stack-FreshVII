@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Reserved for optional food-image uploads. Store files under this path.
+    match /users/{userId}/food-images/{foodId}/{fileName} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
