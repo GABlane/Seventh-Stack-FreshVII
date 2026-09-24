@@ -18,6 +18,8 @@ const categories = ['Produce', 'Dairy & eggs', 'Meat', 'Grains', 'Pantry']
 const units = ['piece', 'bag', 'g', 'ml', 'pack']
 const locations: StorageLocation[] = ['fridge', 'freezer', 'pantry']
 const lowConfidence = 0.6
+// Whole-number units. The step is counted from `min`, so `min` must be 1 (not 0.01) or 11 fails validation.
+const wholeUnits = new Set(['piece', 'bag'])
 
 const fieldClass = 'h-11 w-full rounded-xl border border-[#b8d4df] bg-white px-3 text-sm outline-none focus:border-[#193b5a]'
 
@@ -52,7 +54,7 @@ export function ScanReview({ rows, dateAdded, error, isSaving, onRowChange, onDa
             {row.confidence < lowConfidence && row.include && <p className="mt-2 flex items-center gap-1.5 text-xs font-bold text-[#a76f00]"><TriangleAlert size={14} /> Not sure about this one. Please check it.</p>}
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
               <label className="text-xs font-bold text-[#5b7086]">Quantity
-                <input type="number" min="0.01" step={row.unit === 'piece' || row.unit === 'bag' ? '1' : '0.01'} value={row.quantity} onChange={(event) => onRowChange(row.id, { quantity: event.target.value })} className={`${fieldClass} mt-1`} />
+                <input type="number" min={wholeUnits.has(row.unit) ? '1' : '0.01'} step={wholeUnits.has(row.unit) ? '1' : '0.01'} value={row.quantity} onChange={(event) => onRowChange(row.id, { quantity: event.target.value })} className={`${fieldClass} mt-1`} />
               </label>
               <label className="text-xs font-bold text-[#5b7086]">Unit
                 <select value={row.unit} onChange={(event) => onRowChange(row.id, { unit: event.target.value })} className={`${fieldClass} mt-1`}>{units.map((unit) => <option key={unit}>{unit}</option>)}</select>
