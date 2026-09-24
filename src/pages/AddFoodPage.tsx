@@ -8,6 +8,8 @@ import { defaultShelfKey, storageZones } from '../lib/storage-zones'
 
 const today = new Date().toISOString().slice(0, 10)
 const wholeQuantityUnits = new Set(['piece', 'bag'])
+const maxScanImageBytes = 6 * 1024 * 1024
+const maxScanImageEdge = 2560
 
 type FoodDetection = {
   foodName: string
@@ -27,13 +29,66 @@ function categoryFor(value: string) {
   return 'Pantry'
 }
 
-function fileAsBase64(file: File) {
+function fileAsBase64(file: Blob) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
     reader.onerror = () => reject(new Error('Unable to read this image.'))
     reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '')
     reader.readAsDataURL(file)
   })
+}
+
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    const url = URL.createObjectURL(file)
+    image.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(image)
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('This image could not be prepared for scanning. Please choose another photo.'))
+    }
+    image.src = url
+  })
+}
+
+function canvasAsJpeg(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('This image could not be compressed.')), 'image/jpeg', quality)
+  })
+}
+
+async function prepareScanImage(file: File) {
+  if (file.size <= maxScanImageBytes) return { file, mimeType: file.type }
+
+  const image = await loadImage(file)
+  let width = image.naturalWidth
+  let height = image.naturalHeight
+  const longestEdge = Math.max(width, height)
+  if (longestEdge > maxScanImageEdge) {
+    const ratio = maxScanImageEdge / longestEdge
+    width = Math.round(width * ratio)
+    height = Math.round(height * ratio)
+  }
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('Your browser could not compress this image.')
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, width, height)
+    context.drawImage(image, 0, 0, width, height)
+    const compressed = await canvasAsJpeg(canvas, Math.max(0.38, 0.82 - attempt * 0.07))
+    if (compressed.size <= maxScanImageBytes) return { file: compressed, mimeType: 'image/jpeg' }
+    width = Math.max(640, Math.round(width * 0.82))
+    height = Math.max(640, Math.round(height * 0.82))
+  }
+
+  throw new Error('This photo is still too large after compression. Please choose another image.')
 }
 
 export function AddFoodPage() {
@@ -72,20 +127,22 @@ export function AddFoodPage() {
       setError('Choose an image file to scan.')
       return
     }
-    if (file.size > 7 * 1024 * 1024) {
-      setError('Choose an image smaller than 7 MB.')
-      return
-    }
-
     setError('')
     setIsDetecting(true)
     try {
+      const scanImage = await prepareScanImage(file)
       const response = await fetch('/api/detect-food', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: await fileAsBase64(file), mimeType: file.type }),
+        body: JSON.stringify({ imageBase64: await fileAsBase64(scanImage.file), mimeType: scanImage.mimeType }),
       })
-      const payload = await response.json() as { detection?: FoodDetection; error?: string }
+      const responseText = await response.text()
+      let payload: { detection?: FoodDetection; error?: string } = {}
+      try {
+        payload = responseText ? JSON.parse(responseText) as typeof payload : {}
+      } catch {
+        throw new Error('The food scanner returned an invalid response. Please try again.')
+      }
       if (!response.ok || !payload.detection) throw new Error(payload.error ?? 'Unable to identify that food.')
 
       const result = payload.detection
