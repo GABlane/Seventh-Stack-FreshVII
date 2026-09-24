@@ -41,16 +41,18 @@ function fileAsBase64(file: Blob) {
 function loadImage(file: File) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
-    const url = URL.createObjectURL(file)
     image.onload = () => {
-      URL.revokeObjectURL(url)
       resolve(image)
     }
     image.onerror = () => {
-      URL.revokeObjectURL(url)
       reject(new Error('This image could not be prepared for scanning. Please choose another photo.'))
     }
-    image.src = url
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('This image could not be read for scanning. Please choose another photo.'))
+    reader.onload = () => {
+      image.src = String(reader.result)
+    }
+    reader.readAsDataURL(file)
   })
 }
 
@@ -153,7 +155,8 @@ export function AddFoodPage() {
       setShelfKey(defaultShelfKey(nextLocation))
       setDetection(result)
     } catch (scanError) {
-      setError(scanError instanceof Error ? scanError.message : 'Unable to identify that food.')
+      const message = scanError instanceof Error ? scanError.message : ''
+      setError(message === 'The string did not match the expected pattern.' ? 'Your phone could not prepare that photo. Please take a new photo or choose a JPEG or PNG image.' : message || 'Unable to identify that food.')
     } finally {
       setIsDetecting(false)
     }
