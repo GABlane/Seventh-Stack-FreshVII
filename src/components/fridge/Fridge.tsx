@@ -1,7 +1,7 @@
 import type { FoodItem, StorageLocation } from '../../data/mockData'
-import fridgeIllustration from '../../assets/freshly-open-fridge-blue.png'
-import freezerIllustration from '../../assets/freshly-open-freezer-drawer-blue.png'
-import pantryIllustration from '../../assets/freshly-pantry-empty-blue.png'
+import fridgeIllustration from '../../assets/freshly-open-fridge-reference-blue.png'
+import freezerIllustration from '../../assets/freshly-open-freezer-drawer-reference-blue.png'
+import pantryIllustration from '../../assets/freshly-pantry-empty-reference-blue.png'
 import { FridgeShelf } from './FridgeShelf'
 import { storageZones } from '../../lib/storage-zones'
 
