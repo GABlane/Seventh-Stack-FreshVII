@@ -3,8 +3,7 @@ import { Link } from 'react-router'
 import { RecipeCard } from '../components/recipes/RecipeCard'
 import { AiRescuePlan } from '../components/rescue/AiRescuePlan'
 import { useFoodContext } from '../context/FoodContext'
-import { useRecipeContext } from '../context/RecipeContext'
-import { computeRescueRecommendations } from '../domain/rescue'
+import { useAIRecommendations } from '../hooks/useAIRecommendations'
 import type { FoodItem } from '../data/mockData'
 
 const stateCopy = {
@@ -21,24 +20,13 @@ function RescueItemCard({ item }: { item: FoodItem }) {
 
 export function RescuePage() {
   const { items, rawItems, loading } = useFoodContext()
-  const { recipes } = useRecipeContext()
+  const { recommendations: allRecommendations } = useAIRecommendations(rawItems)
+  const recommendations = allRecommendations.slice(0, 3)
 
   const urgent = items.filter((item) => item.quantity > 0 && (item.freshness === 'rescue-today' || item.freshness === 'use-soon')).sort((a, b) => b.rescueScore - a.rescueScore)
   const rescueToday = items.filter((item) => item.quantity > 0 && item.freshness === 'rescue-today')
   const useSoon = items.filter((item) => item.quantity > 0 && item.freshness === 'use-soon')
   const expired = items.filter((item) => item.quantity > 0 && item.freshness === 'expired')
-
-  const recommendations = computeRescueRecommendations(rawItems, recipes)
-    .slice(0, 3)
-    .map((result) => ({
-      id: result.recipe.id,
-      title: result.recipe.title,
-      time: result.recipe.minutes,
-      match: result.matchPercent,
-      ingredients: result.recipe.ingredients.map((i) => i.name),
-      rescuedIngredients: result.matchedIngredients.map((m) => m.ingredient.name),
-      rescue: result.rescueLabel,
-    }))
 
   function group(title: keyof typeof stateCopy, data: FoodItem[]) {
     const copy = stateCopy[title]
