@@ -56,7 +56,7 @@ FRESHVII keeps a live inventory of the kitchen and turns it into action:
 | Rescue | Lists food to use today, food expiring within about 2 days, and food past its estimated expiry, with a suggested action for each and dinner ideas. |
 | Recipes | Recipes are ranked by how much they use up urgent food. Each recipe shows which ingredients are matched from the kitchen and which are missing. |
 | Cooking flow | "Cook this" walks through the recipe's matched ingredients one at a time (all / some / none used), reduces stock, and can record a leftover item. |
-| Insights | Food wasted and saved (kg), money wasted, items discarded, a most-wasted-categories chart, a weekly recap with a pre-grocery checklist, and most consumed, most purchased, and often forgotten foods. |
+| Insights | Food wasted and saved, items discarded, a most-wasted-categories bar chart, a weekly recap with a pre-grocery checklist, and most consumed, most purchased, often forgotten, and discarded foods. |
 | Notifications | In-app alerts for new food, consumption, freezer moves, and near-expiry items, plus optional browser reminders. |
 | PWA | Installable, with an app manifest and an auto-updating service worker. |
 
@@ -173,31 +173,26 @@ npm run lint
 
 ## Sustainability KPIs
 
-What the Insights page measures today:
+What the Insights page shows today, all computed from the activity log:
 
 | KPI | How it is computed |
 | --- | --- |
-| Food wasted (kg) | Estimated weight of discarded food. |
-| Money wasted | Price paid multiplied by the share of the item discarded, summed over discard events. Shown in PHP. |
+| Food wasted | Total quantity of discarded items, in the unit used most often. |
 | Items discarded | Count of `discarded` events. |
-| Food saved (kg) | Estimated weight of food that was consumed instead of thrown away. |
-| Most wasted categories | Horizontal bar chart of discarded weight per food category. |
-| Weekly recap (last 7 days) | Items saved (distinct items consumed), items that expired (not eaten, estimated expiry in the window), food wasted (kg), and estimated value wasted. Followed by "Before your next grocery run, check these items", which lists the most urgent items in the kitchen. |
+| Food saved | Total quantity of consumed food, in the unit used most often. |
+| Most wasted categories | Bar chart of discarded quantity per food category (top 3). |
+| Weekly recap (last 7 days) | Items saved (consumed events), items that expired (items currently past their estimated expiry), and food wasted. Followed by "Before your next grocery run, check these items", listing items that are expired or need using soon. |
 | Most consumed | Total quantity used per food, from `consumed` events. |
-| Most purchased | Foods added most often. Leftover portions are not counted as purchases. |
-| Often forgotten | Items in the kitchen with the least logged use. |
+| Most purchased | Foods added most often, from `added` events. |
+| Often forgotten | Items in the kitchen that have never been consumed, oldest first. |
+| Discarded food | The most recently discarded items. |
 | Items needing action | Number of items in `rescue-today`, `use-soon`, or `expired` state (header, Home, Rescue). |
 
-**Weights are estimates.** Items are logged in mixed units. `g`, `kg`, `ml`, and `l` convert
-directly (1 ml is treated as 1 g). Counted units use a typical weight: a piece is 150 g for
-produce, 100 g for dairy and grains, 250 g for meat, and 150 g for pantry food; a bag is 500 g,
-a pack 400 g, a serving 250 g, and a tub 500 g. The calculations live in `src/domain/insights.ts`.
-
-`src/domain/impact.ts` also defines *ingredients rescued* and *meals cooked*, which are
-calculated but not shown in the UI.
-
-Money wasted only counts items where a price was entered. Nothing is estimated about
-CO2 or other environmental impact.
+Quantities are not converted to a common weight, so totals are labelled "estimated weight" but
+are simply the summed quantity in one unit. The estimated cost of discarded food (price paid
+multiplied by the share discarded) is recorded on each discard event but is not shown on the
+page. `src/domain/impact.ts` also defines *ingredients rescued* and *meals cooked*, which are
+calculated but not shown in the UI. Nothing is estimated about CO2 or other environmental impact.
 
 ## Gemini integration
 
@@ -264,7 +259,7 @@ No screenshots are committed yet. Add them under `docs/screenshots/` and link th
 - **Browser reminders** only fire while the app is open. There is no background push notification.
 - **Ad blockers** can block Firestore's connection (`ERR_BLOCKED_BY_CLIENT`), which can leave the food
   list empty for those users.
-- **Weights are estimates** (see [Sustainability KPIs](#sustainability-kpis)), and money is shown in PHP only.
+- **Insights totals mix units.** Waste and savings totals sum quantities in one unit instead of converting to kg, and the money wasted on discards is stored but not displayed (see [Sustainability KPIs](#sustainability-kpis)).
 - **No automated tests.** Verification is `npm run build` and `npm run lint`.
 - **Development route:** `/dev/food-test` is still routed in the app and should be removed or gated for production.
 - **Deploy configuration:** the GitHub Actions workflow needs the `VERCEL_ORG_ID` and
@@ -274,7 +269,7 @@ No screenshots are committed yet. Add them under `docs/screenshots/` and link th
 
 - Barcode scanning (the data model already has room for barcodes) and reading printed expiry dates from photos.
 - Score scan accuracy against a labelled set of food photos, and let a scan mark items as already opened.
-- Show the impact metrics in the UI: ingredients rescued, meals cooked, food saved, plus weekly and monthly trends.
+- Convert quantities to kg for accurate waste and savings totals, show money wasted, and add the impact metrics (ingredients rescued, meals cooked) plus weekly and monthly trends.
 - Estimate environmental impact (for example CO2 avoided) from food weight.
 - Household sharing, so several people manage one kitchen.
 - Background push notifications for items about to expire.
