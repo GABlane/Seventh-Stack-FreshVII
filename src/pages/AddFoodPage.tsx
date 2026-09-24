@@ -8,10 +8,14 @@ import { defaultShelfKey, storageZones } from '../lib/storage-zones'
 
 const today = new Date().toISOString().slice(0, 10)
 const wholeQuantityUnits = new Set(['piece', 'bag'])
-// A 3 MB image becomes roughly 4 MB once base64-encoded, leaving room below
-// Vercel Functions' 4.5 MB request-body limit.
-const maxScanImageBytes = 3 * 1024 * 1024
-const maxScanImageEdge = 2560
+// Food recognition needs little detail, so scans are always downscaled: a small
+// upload is much faster on mobile data and gives the model less to process.
+const maxScanImageEdge = 768
+const scanImageQuality = 0.8
+// If a photo cannot be decoded in the browser (e.g. HEIC), it is sent as-is when
+// small enough. 3 MB becomes roughly 4 MB in base64, below Vercel Functions'
+// 4.5 MB request-body limit.
+const maxRawScanImageBytes = 3 * 1024 * 1024
 
 type FoodDetection = {
   foodName: string
@@ -65,34 +69,22 @@ function canvasAsJpeg(canvas: HTMLCanvasElement, quality: number) {
 }
 
 async function prepareScanImage(file: File) {
-  if (file.size <= maxScanImageBytes) return { file, mimeType: file.type }
-
-  const image = await loadImage(file)
-  let width = image.naturalWidth
-  let height = image.naturalHeight
-  const longestEdge = Math.max(width, height)
-  if (longestEdge > maxScanImageEdge) {
-    const ratio = maxScanImageEdge / longestEdge
-    width = Math.round(width * ratio)
-    height = Math.round(height * ratio)
-  }
-
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  try {
+    const image = await loadImage(file)
+    const ratio = Math.min(1, maxScanImageEdge / Math.max(image.naturalWidth, image.naturalHeight))
     const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
+    canvas.width = Math.round(image.naturalWidth * ratio)
+    canvas.height = Math.round(image.naturalHeight * ratio)
     const context = canvas.getContext('2d')
     if (!context) throw new Error('Your browser could not compress this image.')
     context.fillStyle = '#ffffff'
-    context.fillRect(0, 0, width, height)
-    context.drawImage(image, 0, 0, width, height)
-    const compressed = await canvasAsJpeg(canvas, Math.max(0.38, 0.82 - attempt * 0.07))
-    if (compressed.size <= maxScanImageBytes) return { file: compressed, mimeType: 'image/jpeg' }
-    width = Math.max(640, Math.round(width * 0.82))
-    height = Math.max(640, Math.round(height * 0.82))
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+    return { file: await canvasAsJpeg(canvas, scanImageQuality), mimeType: 'image/jpeg' }
+  } catch (error) {
+    if (file.size <= maxRawScanImageBytes) return { file, mimeType: file.type }
+    throw error
   }
-
-  throw new Error('This photo is still too large after compression. Please choose another image.')
 }
 
 export function AddFoodPage() {

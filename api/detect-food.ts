@@ -3,19 +3,21 @@ import { GoogleGenAI } from '@google/genai'
 const prompt = `
 Identify the main food item in this image.
 
-Return ONLY JSON in this shape:
-
-{
-  "foodName": "string",
-  "category": "Produce | Dairy & eggs | Meat | Grains | Pantry",
-  "subcategory": "string",
-  "condition": "string",
-  "suggestedStorage": "fridge | freezer | pantry",
-  "confidence": 0.0
-}
-
 Do not estimate an exact expiry date. If the image is not clearly food, use a low confidence score.
 `
+
+const detectionSchema = {
+  type: 'object',
+  properties: {
+    foodName: { type: 'string' },
+    category: { type: 'string', enum: ['Produce', 'Dairy & eggs', 'Meat', 'Grains', 'Pantry'] },
+    subcategory: { type: 'string' },
+    condition: { type: 'string' },
+    suggestedStorage: { type: 'string', enum: ['fridge', 'freezer', 'pantry'] },
+    confidence: { type: 'number' },
+  },
+  required: ['foodName', 'category', 'subcategory', 'condition', 'suggestedStorage', 'confidence'],
+}
 
 function parseJson(text: string) {
   const json = text.trim().replace(/^```json\s*/i, '').replace(/```$/i, '').trim()
@@ -37,6 +39,8 @@ export default async function detectFood(request: Request) {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
     const interaction = await ai.interactions.create({
       model: 'gemini-3.8-flash',
+      generation_config: { thinking_level: 'minimal' },
+      response_format: { type: 'text', mime_type: 'application/json', schema: detectionSchema },
       input: [
         { type: 'text', text: prompt },
         { type: 'image', data: imageBase64, mime_type: mimeType },
