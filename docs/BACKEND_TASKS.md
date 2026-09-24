@@ -190,29 +190,29 @@ FRESHVII | Seventh Stack | AppCon Hackathon
 
 ### **Fix broken import**
 
-- [ ] [BE] Define and export ImpactEvent type from food.service.ts
+- [X] [BE] Define and export ImpactEvent type from food.service.ts
 
-- - [ ] [BE] useImpactEvents.ts imports ImpactEvent but the type does not exist — causes compile error
+- - [X] [BE] useImpactEvents.ts imports ImpactEvent but the type does not exist — causes compile error
 
 ### **Activity query**
 
-- [ ] [BE] Add fetchActivityEvents(uid, limit?) to food.service.ts
+- [X] [BE] Add fetchActivityEvents(uid, limit?) to food.service.ts
 
-- - [ ] [BE] Reads from activity subcollection ordered by createdAt descending
+- - [X] [BE] Reads from activity subcollection ordered by createdAt descending
 
 ### **Aggregate metrics domain service**
 
-- [ ] [BE] Create src/domain/impact.ts
+- [X] [BE] Create src/domain/impact.ts
 
-- - [ ] [BE] ingredientsRescued — count consumed events
+- - [X] [BE] ingredientsRescued — count consumed events
 
-- - [ ] [BE] mealsCooked — count cooking sessions
+- - [X] [BE] mealsCooked — count cooking sessions
 
-- - [ ] [BE] estimatedFoodSaved — sum quantity from consumed events
+- - [X] [BE] estimatedFoodSaved — sum quantity from consumed events
 
 - - [ ] [BE] estimatedMoneySaved — optional, uses purchase_price from seed data
 
-- [ ] [BE] Implement useImpactEvents hook with real data instead of empty stub
+- [X] [BE] Implement useImpactEvents hook with real data instead of empty stub
 
 FRESHVII | Seventh Stack | AppCon Hackathon
 
