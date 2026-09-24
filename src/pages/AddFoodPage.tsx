@@ -128,7 +128,7 @@ export function AddFoodPage() {
   }
 
   return (
-    <div className="w-full max-w-3xl space-y-8">
+    <div className="mx-auto w-full max-w-3xl space-y-8">
       <Link to="/app" className="inline-flex items-center gap-2 text-sm font-bold text-[#426a5a]"><ArrowLeft size={16} /> Back to kitchen</Link>
       <div>
         <p className="text-sm font-bold uppercase tracking-[0.14em] text-[#426a5a]">New inventory</p>
