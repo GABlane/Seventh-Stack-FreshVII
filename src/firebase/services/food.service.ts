@@ -22,6 +22,7 @@ import {
   openFood,
   freezeFood,
   unfreezeFood,
+  moveFood,
   consumeFood,
   discardFood,
   createLeftover,
@@ -156,6 +157,27 @@ export async function unfreezeItem(
   return updated
 }
 
+export async function moveItem(
+  uid: string,
+  item: FoodItemRecord,
+  location: StorageLocation,
+  shelfKey: string,
+  at: Date | string = new Date(),
+): Promise<FoodItemRecord> {
+  const { item: updated, event } = moveFood(item, location, shelfKey, at)
+
+  await updateDoc(itemDoc(uid, item.id), {
+    storageLocation: updated.storageLocation,
+    shelfKey: updated.shelfKey,
+    frozenDate: updated.frozenDate ?? null,
+    estimatedExpiry: updated.estimatedExpiry ?? null,
+    updatedAt: updated.updatedAt,
+  })
+
+  await logEvent(uid, event)
+  return updated
+}
+
 export async function consumeItem(
   uid: string,
   item: FoodItemRecord,
@@ -255,6 +277,7 @@ const EVENT_TYPE_MAP: Record<FoodEventType, string> = {
   'frozen':           'moved-to-freezer',
   'opened':           'food-opened',
   'unfrozen':         'food-frozen-unfrozen',
+  'moved':            'food-moved',
   'discarded':        'food-discarded',
   'edited':           'food-edited',
   'leftover-created': 'leftover-created',
@@ -294,6 +317,15 @@ export function subscribeToItems(
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const items = snapshot.docs.map((d) => docToRecord(d.data()))
     callback(items)
+  })
+}
+
+export function subscribeToActivity(
+  uid: string,
+  callback: (events: FoodEvent[]) => void,
+): Unsubscribe {
+  return onSnapshot(query(activityCol(uid)), (snapshot: QuerySnapshot<DocumentData>) => {
+    callback(snapshot.docs.map((document) => ({ id: document.id, ...document.data() }) as FoodEvent))
   })
 }
 

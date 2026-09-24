@@ -24,5 +24,7 @@ dist-ssr
 *.sw?
 .env
 .env.seed
+.vercel
 .package-lock.json
-
+.env*
+!.env.example

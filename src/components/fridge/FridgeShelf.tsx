@@ -1,6 +1,26 @@
 import type { FoodItem } from '../../data/mockData'
+import type { StorageZone } from '../../lib/storage-zones'
 import { FoodItem as FoodItemCard } from './FoodItem'
 
-export function FridgeShelf({ label, items }: { label: string; items: FoodItem[] }) {
-  return <section className="space-y-3">{label && <div className="flex items-center justify-between px-1"><h3 className="text-xs font-black uppercase tracking-[0.14em] text-[#4f8ca3]">{label}</h3><span className="text-xs font-bold text-[#78a2ad]">{items.length} item{items.length === 1 ? '' : 's'}</span></div>}{items.length ? <div className="space-y-3">{items.map((item) => <FoodItemCard key={item.id} item={item} />)}</div> : <p className="rounded-2xl border border-dashed border-[#b9dce7] bg-white/60 py-8 text-center text-sm text-[#5e7f8b]">This space is clear.</p>}</section>
+export function FridgeShelf({ zone, items, overlayClassName }: { zone: StorageZone; items: FoodItem[]; overlayClassName?: string }) {
+  if (overlayClassName) {
+    return (
+      <section className={`absolute ${overlayClassName}`}>
+        {items.length ? <div className="flex flex-wrap items-center gap-1.5">{items.slice(0, 5).map((item) => <FoodItemCard key={item.id} item={item} visual />)}{items.length > 5 && <p className="flex size-8 items-center justify-center rounded-full bg-[#fffdf8]/90 text-center text-[8px] font-black text-[#426a5a] shadow-sm sm:size-10">+{items.length - 5}</p>}</div> : null}
+      </section>
+    )
+  }
+
+  return (
+    <section className="rounded-[1.35rem] border border-[#e5e1d5] bg-white/90 p-3 shadow-[inset_0_-7px_0_#d8d1c0] sm:p-4">
+      <div className="flex items-start justify-between gap-3 px-1">
+        <div>
+          <h3 className="text-xs font-black uppercase tracking-[0.14em] text-[#426a5a]">{zone.label}</h3>
+          <p className="mt-1 text-[11px] font-semibold text-[#888b78]">{zone.description}</p>
+        </div>
+        <span className="rounded-full bg-[#dce9de] px-2 py-1 text-[11px] font-black text-[#426a5a]">{items.length}</span>
+      </div>
+      {items.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{items.map((item) => <FoodItemCard key={item.id} item={item} compact />)}</div> : <p className="mt-3 rounded-xl border border-dashed border-[#ddd7c8] bg-[#fdfbf6] px-3 py-4 text-center text-xs font-semibold text-[#9a9a85]">This shelf is clear.</p>}
+    </section>
+  )
 }

@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read, create, update, delete: if isOwner(userId);
+    }
+
+    match /profiles/{userId}/items/{itemId} {
+      allow read, create, update, delete: if isOwner(userId);
+    }
+
+    match /profiles/{userId}/activity/{eventId} {
+      allow read, create: if isOwner(userId);
+      allow update, delete: if false;
+    }
+  }
+}

@@ -1,57 +1,30 @@
-import { CircleDollarSign, Lightbulb, PackageOpen, ShoppingBasket, Trash2 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ChartColumnIncreasing, CircleDollarSign, Clock3, Leaf, Trash2, Utensils } from 'lucide-react'
 import { Link } from 'react-router'
-import { useFoodItems } from '../hooks/useFoodItems'
-import { useImpactEvents } from '../hooks/useImpactEvents'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Progress } from '../components/ui/progress'
+import { useFoodContext } from '../context/FoodContext'
+import { FoodIcon } from '../lib/food-icons'
 
-const chartValues = [1.4, 1.2, 1.3, 0.9, 1, 0.8]
-const chartLabels = ['Aug 17', 'Aug 24', 'Aug 31', 'Sep 7', 'Sep 14', 'This wk']
-const fallbackForgotten = [
-  { name: 'Lettuce', detail: 'approx. P260 lost - buy half heads', badge: 'Expired 4 x', accent: 'bg-[#d9f5d8]' },
-  { name: 'Bread', detail: 'approx. P216 lost - freeze half the loaf', badge: 'Expired 3 x', accent: 'bg-[#fff0dc]' },
-  { name: 'Greek Yogurt', detail: 'approx. P225 lost - buy smaller cups', badge: 'Expired 3 x', accent: 'bg-[#f4e8fa]' },
-]
-const fallbackPurchased = [
-  { name: 'Milk', count: 9, icon: 'bg-[#e8f7fa]' },
-  { name: 'Eggs', count: 7, icon: 'bg-[#fff8d8]' },
-  { name: 'Chicken Breast', count: 6, icon: 'bg-[#ffe9e8]' },
-  { name: 'Rice', count: 4, icon: 'bg-[#fff0dc]' },
-]
+const money = (amount: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount)
+const amount = (value: number) => Number.isInteger(value) ? String(value) : value.toFixed(1)
 
 export function InsightsPage() {
-  const { items, isLoading: foodLoading, error: foodError } = useFoodItems()
-  const { events, isLoading: eventsLoading, error: eventsError } = useImpactEvents()
-  const expiredItems = items.filter((item) => item.freshness === 'expired')
-  const savedCount = events.filter((event) => event.type === 'ingredient-rescued' || event.type === 'meal-prepared').length
-  const wastedCount = expiredItems.length
-  const foodWasted = expiredItems.reduce((total, item) => total + item.quantity, 0)
-  const moneyWasted = Math.round(foodWasted * 120)
-  const forgottenItems = expiredItems.length > 0 ? expiredItems.slice(0, 3).map((item) => ({ name: item.name, detail: 'Review this item before your next grocery run', badge: 'Expired', accent: 'bg-[#e8f7fa]' })) : fallbackForgotten
-  const purchasedItems = fallbackPurchased
-  const loading = foodLoading || eventsLoading
-  const error = foodError || eventsError
+  const { items, rawItems, events, loading } = useFoodContext()
+  const byId = new Map(rawItems.map((item) => [item.id, item]))
+  const consumed = new Map<string, { id: string; name: string; category: string; unit: string; quantity: number }>()
+  for (const event of events.filter((entry) => entry.type === 'consumed')) {
+    const quantity = Math.abs(Number(event.quantityChange ?? 0)); if (!quantity) continue
+    const item = byId.get(event.foodItemId); const previous = consumed.get(event.foodItemId)
+    consumed.set(event.foodItemId, { id: event.foodItemId, name: item?.name ?? 'Unknown food', category: item?.category ?? 'Pantry', unit: item?.unit ?? '', quantity: (previous?.quantity ?? 0) + quantity })
+  }
+  const favourites = [...consumed.values()].sort((a, b) => b.quantity - a.quantity).slice(0, 4)
+  const largest = favourites[0]?.quantity ?? 1
+  const useById = new Map(favourites.map((food) => [food.id, food.quantity]))
+  const rare = [...items].sort((a, b) => (useById.get(a.id) ?? 0) - (useById.get(b.id) ?? 0) || a.dateAdded.localeCompare(b.dateAdded)).slice(0, 4)
+  const wasted = events.filter((entry) => entry.type === 'discarded').map((event) => ({ event, item: byId.get(event.foodItemId) })).sort((a, b) => b.event.createdAt.localeCompare(a.event.createdAt))
+  const wasteCost = wasted.reduce((total, { event }) => total + Number(event.metadata?.estimatedWasteCost ?? 0), 0)
 
-  return <div className="-mx-5 -my-8 min-h-full w-[calc(100%+2.5rem)] space-y-4 bg-[#eefafd] px-5 py-6 pb-8 sm:-mx-8 sm:-my-12 sm:w-[calc(100%+4rem)] sm:space-y-6 sm:px-8 sm:py-8">
-    <header className="flex items-start justify-between gap-3">
-      <div><h1 className="text-[2rem] font-black leading-none tracking-[-0.04em] text-[#14384a]">Insights</h1><p className="mt-2 text-sm font-semibold text-[#477d8d]">Sep 21 - 27 · this week</p></div>
-      <div className="flex overflow-hidden rounded-xl border border-[#cde6ed] bg-white text-xs font-black text-[#145d72] shadow-sm"><button type="button" className="bg-[#e8f7fa] px-3 py-2">Week</button><button type="button" className="px-3 py-2">Month</button></div>
-    </header>
-    {error && <p role="alert" className="rounded-2xl bg-[#fff0ef] p-4 text-sm text-[#ad4147]">{error}</p>}
-    {loading ? <div className="rounded-3xl border border-[#cde6ed] bg-white p-10 text-center text-[#5e7f8b]">Building your insights...</div> : <>
-      <section className="grid grid-cols-2 gap-3">
-        <MetricCard label="Food wasted" value={`${foodWasted.toFixed(1)} kg`} note="down 0.2 kg vs last week" icon={<Trash2 size={14} />} />
-        <MetricCard label="Money wasted" value={`P${moneyWasted}`} note="up P30 vs last week" icon={<CircleDollarSign size={14} />} />
-        <MetricCard label="Items discarded" value={String(wastedCount)} note="down 1 vs last week" icon={<PackageOpen size={14} />} />
-        <MetricCard label="Food saved" value={`${(savedCount || 3.3).toFixed(1)} kg`} note="up 0.4 kg vs last week" icon={<ShoppingBasket size={14} />} />
-      </section>
-      <section className="rounded-2xl border border-[#d7e4e8] bg-white p-4 shadow-[0_5px_14px_rgba(31,78,93,0.05)]"><div className="flex items-center justify-between"><h2 className="font-black text-[#173d4e]">Food wasted (kg)</h2><p className="text-xs font-bold text-[#145d72]">down 0.2 kg vs last week</p></div><div className="mt-5 flex h-40 items-end gap-2 border-b border-[#d7e4e8] px-1 sm:gap-4">{chartValues.map((value, index) => <div key={chartLabels[index]} className="flex h-full flex-1 flex-col items-center justify-end gap-2"><div className="text-[10px] font-bold text-[#173d4e]">{value}</div><div className={`w-full max-w-8 rounded-t-md ${index === chartValues.length - 1 ? 'bg-[#20bed0]' : 'bg-[#9fe4eb]'}`} style={{ height: `${value / 1.4 * 72}%` }} /><span className="whitespace-nowrap text-[9px] text-[#477d8d]">{chartLabels[index]}</span></div>)}</div></section>
-      <section className="rounded-2xl bg-[#d9f5f8] p-4"><div className="flex items-center justify-between"><h2 className="text-lg font-black text-[#173d4e]">This week</h2><span className="text-xs font-black text-[#145d72]">Weekly recap</span></div><ul className="mt-3 space-y-2 text-sm font-semibold text-[#145d72]"><li>● &nbsp;{savedCount || 5} items were saved from expiring.</li><li>● &nbsp;{wastedCount || 2} items expired.</li><li>● &nbsp;{foodWasted.toFixed(1)} kg of food was wasted.</li><li>● &nbsp;P{moneyWasted || 120} estimated value wasted.</li></ul><div className="mt-4 rounded-2xl bg-white p-3"><p className="text-xs font-black text-[#173d4e]">Before your next grocery run, check these items:</p><div className="mt-3 flex flex-wrap gap-2">{forgottenItems.slice(0, 4).map((item) => <span key={item.name} className="rounded-full bg-[#e8f7fa] px-2.5 py-1 text-xs font-bold text-[#145d72]">{item.name}</span>)}</div><Link to="/app/rescue" className="mt-3 inline-flex h-9 items-center rounded-xl bg-[#20bed0] px-3 text-xs font-black text-[#063e4d]">Review food</Link></div></section>
-      <section className="rounded-2xl border border-[#d7e4e8] bg-white p-4 shadow-[0_5px_14px_rgba(31,78,93,0.05)]"><div className="flex items-center justify-between"><h2 className="font-black text-[#173d4e]">Often forgotten</h2><span className="text-xs font-bold text-[#6f8b95]">expired before eaten</span></div><div className="mt-3 space-y-3">{forgottenItems.map((item) => <div key={item.name} className="flex items-center gap-3"><span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${item.accent}`}><Lightbulb size={18} className="text-[#4f8ca3]" /></span><div className="min-w-0 flex-1"><p className="font-black text-[#173d4e]">{item.name}</p><p className="text-xs leading-4 text-[#477d8d]">{item.detail}</p></div><span className="shrink-0 rounded-full bg-[#ffd9d8] px-2.5 py-1 text-[10px] font-black text-[#c52e31]">{item.badge}</span></div>)}</div></section>
-      <section className="rounded-2xl border border-[#d7e4e8] bg-white p-4 shadow-[0_5px_14px_rgba(31,78,93,0.05)]"><div className="flex items-center justify-between"><h2 className="font-black text-[#173d4e]">Most purchased</h2><span className="text-xs font-bold text-[#6f8b95]">last 30 days</span></div><div className="mt-3 space-y-3">{purchasedItems.map((item, index) => <div key={item.name} className="flex items-center gap-2"><span className="w-4 text-xs font-bold text-[#173d4e]">{index + 1}</span><span className={`flex size-8 items-center justify-center rounded-lg ${item.icon}`}><ShoppingBasket size={16} className="text-[#4f8ca3]" /></span><div className="min-w-0 flex-1"><div className="flex justify-between text-xs font-black text-[#173d4e]"><span>{item.name}</span><span>{item.count}x</span></div><div className="mt-1 h-1.5 rounded-full bg-[#d9eef3]"><div className="h-full rounded-full bg-[#20bed0]" style={{ width: `${item.count / 9 * 100}%` }} /></div></div></div>)}</div></section>
-    </>}
-  </div>
+  return <div className="w-full max-w-5xl space-y-6"><section className="rounded-[2rem] bg-[#426a5a] p-5 text-white sm:p-7"><div className="flex gap-4"><span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#f2c57c] text-[#426a5a]"><ChartColumnIncreasing size={24} /></span><div><p className="text-xs font-black uppercase tracking-[0.15em] text-[#f8dda6]">Kitchen analytics</p><h1 className="mt-1 text-3xl font-black sm:text-4xl">Your food insights</h1><p className="mt-2 text-sm font-medium text-[#dce9de]">What you use, what sits, and the cost of food not rescued.</p></div></div></section>{loading ? <Card><CardContent className="p-10 text-center text-sm font-semibold text-[#7d806e]">Loading your kitchen insights...</CardContent></Card> : <><div className="grid gap-4 lg:grid-cols-2"><Card><CardHeader><div className="flex items-center justify-between"><div><CardTitle>Most consumed</CardTitle><CardDescription>Based on logged consumption.</CardDescription></div><Utensils className="text-[#426a5a]" /></div></CardHeader><CardContent className="space-y-4">{favourites.length ? favourites.map((food) => <div key={food.id} className="flex items-center gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#f6f1e5] text-[#426a5a]"><FoodIcon name={food.name} category={food.category} size={20} /></span><div className="min-w-0 flex-1"><div className="flex justify-between gap-2"><p className="truncate text-sm font-black">{food.name}</p><p className="text-xs font-bold text-[#426a5a]">{amount(food.quantity)} {food.unit}</p></div><Progress value={food.quantity / largest * 100} className="mt-2" /></div></div>) : <Empty icon={<Utensils size={20} />} text="Log food you use to see favourites." />}</CardContent></Card><Card><CardHeader><div className="flex items-center justify-between"><div><CardTitle>Rarely eaten</CardTitle><CardDescription>Active food with the least use so far.</CardDescription></div><Clock3 className="text-[#9a6d20]" /></div></CardHeader><CardContent className="space-y-2">{rare.length ? rare.map((item) => <Link key={item.id} to={`/app/food/${item.id}`} className="flex items-center gap-3 rounded-2xl bg-[#fdfbf6] p-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#426a5a]"><FoodIcon name={item.name} category={item.category} size={20} /></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{item.name}</p><p className="text-xs font-semibold text-[#7d806e]">{useById.get(item.id) ? `${amount(useById.get(item.id) ?? 0)} ${item.unit} used` : 'Not used yet'}</p></div><Leaf size={17} className="text-[#7fb685]" /></Link>) : <Empty icon={<Clock3 size={20} />} text="Add food to find items needing attention." />}</CardContent></Card></div><Card className="overflow-hidden"><CardContent className="grid gap-5 p-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:p-6"><span className="flex size-14 items-center justify-center rounded-2xl bg-[#f9ddd9] text-[#b84f49]"><Trash2 size={25} /></span><div><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[#b84f49]"><CircleDollarSign size={15} /> Food waste cost</p><h2 className="mt-1 text-3xl font-black">{money(wasteCost)}</h2><p className="mt-1 text-sm font-medium text-[#7d806e]">{wasted.length ? `${wasted.length} discarded item${wasted.length === 1 ? '' : 's'} recorded.` : 'No discarded food recorded yet.'}</p></div><p className="rounded-2xl bg-[#f6f1e5] px-4 py-3 text-center text-sm font-bold text-[#426a5a]">{wasted.length} wasted</p></CardContent>{wasted.length > 0 && <div className="border-t border-[#e5e1d5] bg-[#fdfbf6] p-5"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#7d806e]">Foods wasted</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{wasted.map(({ event, item }) => <div key={event.id} className="flex items-center gap-3 rounded-2xl bg-white p-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#f9ddd9] text-[#b84f49]"><FoodIcon name={item?.name ?? 'Food'} category={item?.category} size={18} /></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-black">{item?.name ?? 'Unknown food'}</p><p className="text-xs font-semibold text-[#7d806e]">Discarded</p></div><p className="text-sm font-black text-[#b84f49]">{money(Number(event.metadata?.estimatedWasteCost ?? 0))}</p></div>)}</div></div>}</Card></>}</div>
 }
 
-function MetricCard({ label, value, note, icon }: { label: string; value: string; note: string; icon: ReactNode }) {
-  return <article className="rounded-2xl border border-[#d7e4e8] bg-white p-3 shadow-[0_5px_14px_rgba(31,78,93,0.05)]"><div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.08em] text-[#173d4e]"><span className="text-[#20bed0]">{icon}</span>{label}</div><p className="mt-1 text-2xl font-black leading-none text-[#173d4e]">{value}</p><p className="mt-2 text-[10px] font-semibold text-[#173d4e]">{note}</p></article>
-}
+function Empty({ icon, text }: { icon: React.ReactNode; text: string }) { return <div className="flex min-h-36 flex-col items-center justify-center rounded-2xl border border-dashed border-[#ddd7c8] text-center text-sm font-semibold text-[#7d806e]"><span className="mb-3 text-[#7fb685]">{icon}</span>{text}</div> }

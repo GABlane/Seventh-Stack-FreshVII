@@ -8,7 +8,9 @@ export type FoodItem = {
   quantity: number
   unit: string
   location: StorageLocation
+  shelfKey: string
   shelf: string
+  imageUrl?: string
   opened: boolean
   dateAdded: string
   openedDate?: string

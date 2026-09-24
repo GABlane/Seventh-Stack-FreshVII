@@ -8,11 +8,14 @@ import {
   consumeItem as serviceConsumeItem,
   discardItem as serviceDiscardItem,
   createLeftoverItem as serviceCreateLeftoverItem,
+  moveItem as serviceMoveItem,
+  subscribeToActivity,
   subscribeToItems,
 } from '../firebase/index'
 import { calculateFreshness, calculateRescueScore } from '../domain/freshness'
-import type { FoodItemRecord } from '../domain/food'
+import type { FoodEvent, FoodItemRecord } from '../domain/food'
 import type { FoodItem, StorageLocation } from '../data/mockData'
+import { defaultShelfKey, shelfLabel, zoneForShelfKey } from '../lib/storage-zones'
 
 // ---------------------------------------------------------------------------
 // Mapping helpers
@@ -24,12 +27,6 @@ const CATEGORY_ACCENT: Record<string, string> = {
   'Meat':        '#f0ddd2',
   'Grains':      '#eee9d9',
   'Pantry':      '#e8e4d9',
-}
-
-const DEFAULT_SHELF: Record<StorageLocation, string> = {
-  fridge:  'Fridge',
-  freezer: 'Drawer 1',
-  pantry:  'Dry goods',
 }
 
 function toDisplayItem(record: FoodItemRecord): FoodItem {
@@ -52,7 +49,9 @@ function toDisplayItem(record: FoodItemRecord): FoodItem {
     quantity:            record.quantity,
     unit:                record.unit,
     location:            record.storageLocation,
-    shelf:               record.shelfKey ?? DEFAULT_SHELF[record.storageLocation],
+    shelfKey:            record.shelfKey ?? defaultShelfKey(record.storageLocation),
+    shelf:               shelfLabel(record.shelfKey ?? defaultShelfKey(record.storageLocation), record.storageLocation),
+    imageUrl:            record.imageUrl,
     opened:              record.opened,
     dateAdded:           record.dateAdded,
     openedDate:          record.openedDate,
@@ -74,11 +73,13 @@ export type AddItemInput = {
   name: string
   category: string
   quantity: number
+  pricePaid?: number
   unit: string
   storageLocation: StorageLocation
   opened: boolean
   dateAdded: string
   estimatedExpiry?: string
+  shelfKey: string
 }
 
 type FoodContextValue = {
@@ -87,12 +88,14 @@ type FoodContextValue = {
   loading: boolean
   items: FoodItem[]
   rawItems: FoodItemRecord[]
+  events: FoodEvent[]
   addNewItem:        (input: AddItemInput) => Promise<void>
   openItem:          (id: string) => Promise<void>
   freezeItem:        (id: string) => Promise<void>
   consumeItem:       (id: string, qty: number) => Promise<void>
   discardItem:       (id: string) => Promise<void>
   createLeftoverItem:(id: string, qty: number) => Promise<void>
+  moveItem:          (id: string, shelfKey: string) => Promise<void>
 }
 
 const FoodContext = createContext<FoodContextValue | null>(null)
@@ -111,6 +114,7 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
   const [uid, setUid]                 = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [rawItems, setRawItems]       = useState<FoodItemRecord[]>([])
+  const [events, setEvents]           = useState<FoodEvent[]>([])
   const [loading, setLoading]         = useState(true)
 
   // Auth state
@@ -120,6 +124,7 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
       setDisplayName(user?.displayName ?? null)
       if (!user) {
         setRawItems([])
+        setEvents([])
         setLoading(false)
       }
     })
@@ -130,14 +135,19 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
     if (!uid) return
     setLoading(true)
     const unsub = subscribeToItems(uid, (all) => {
-      setRawItems(all.filter((i) => i.status === 'active'))
+      setRawItems(all)
       setLoading(false)
     })
     return unsub
   }, [uid])
 
+  useEffect(() => {
+    if (!uid) return
+    return subscribeToActivity(uid, setEvents)
+  }, [uid])
+
   // Derived display items
-  const items: FoodItem[] = rawItems.map(toDisplayItem)
+  const items: FoodItem[] = rawItems.filter((item) => item.status === 'active').map(toDisplayItem)
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -179,10 +189,17 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
     await serviceCreateLeftoverItem(uid, findRaw(id), qty)
   }
 
+  async function moveItem(id: string, shelfKey: string): Promise<void> {
+    if (!uid) throw new Error('Not signed in')
+    const destination = zoneForShelfKey(shelfKey)
+    if (!destination) throw new Error('Choose a valid storage shelf.')
+    await serviceMoveItem(uid, findRaw(id), destination.location, shelfKey)
+  }
+
   return (
     <FoodContext.Provider value={{
-      uid, displayName, loading, items, rawItems,
-      addNewItem, openItem, freezeItem, consumeItem, discardItem, createLeftoverItem,
+      uid, displayName, loading, items, rawItems, events,
+      addNewItem, openItem, freezeItem, consumeItem, discardItem, createLeftoverItem, moveItem,
     }}>
       {children}
     </FoodContext.Provider>
