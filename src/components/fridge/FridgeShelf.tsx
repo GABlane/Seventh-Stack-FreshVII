@@ -2,11 +2,11 @@ import type { FoodItem } from '../../data/mockData'
 import type { StorageZone } from '../../lib/storage-zones'
 import { FoodItem as FoodItemCard } from './FoodItem'
 
-export function FridgeShelf({ zone, items, overlayClassName }: { zone: StorageZone; items: FoodItem[]; overlayClassName?: string }) {
+export function FridgeShelf({ zone, items, overlayClassName, visualLarge = false }: { zone: StorageZone; items: FoodItem[]; overlayClassName?: string; visualLarge?: boolean }) {
   if (overlayClassName) {
     return (
       <section className={`absolute ${overlayClassName}`}>
-        {items.length ? <div className="flex flex-wrap items-center gap-1.5">{items.slice(0, 5).map((item) => <FoodItemCard key={item.id} item={item} visual />)}{items.length > 5 && <p className="flex size-8 items-center justify-center rounded-full bg-[#fffdf8]/90 text-center text-[8px] font-black text-[#193b5a] shadow-sm sm:size-10">+{items.length - 5}</p>}</div> : null}
+        {items.length ? <div className={`flex flex-wrap items-center ${visualLarge ? 'gap-2' : 'gap-1.5'}`}>{items.slice(0, 5).map((item) => <FoodItemCard key={item.id} item={item} visual visualLarge={visualLarge} />)}{items.length > 5 && <p className="flex size-8 items-center justify-center rounded-full bg-[#fffdf8]/90 text-center text-[8px] font-black text-[#193b5a] shadow-sm sm:size-10">+{items.length - 5}</p>}</div> : null}
       </section>
     )
   }

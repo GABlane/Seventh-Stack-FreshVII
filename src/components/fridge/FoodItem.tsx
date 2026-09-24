@@ -11,11 +11,11 @@ const statusColors: Record<FoodRecord['freshness'], string> = {
   expired: 'bg-[#ee5c63]',
 }
 
-export function FoodItem({ item, compact = false, visual = false }: { item: FoodRecord; compact?: boolean; visual?: boolean }) {
+export function FoodItem({ item, compact = false, visual = false, visualLarge = false }: { item: FoodRecord; compact?: boolean; visual?: boolean; visualLarge?: boolean }) {
   if (visual) {
-    return <Link to={`/app/food/${item.id}`} aria-label={`${item.name}, ${item.quantity} ${item.unit}`} title={item.name} className="group flex w-9 flex-col items-center gap-0.5 text-[#193b5a] transition-transform hover:-translate-y-0.5 hover:scale-105 sm:w-11">
-      <span className="relative flex size-6 items-center justify-center rounded-full bg-white/92 shadow-sm sm:size-8"><span className={`absolute right-0 top-0 size-1.5 rounded-full ring-1 ring-white ${statusColors[item.freshness]}`} /><FoodIcon name={item.name} category={item.category} className="size-3.5 sm:size-4" /></span>
-      <span className="w-full truncate text-center text-[5px] font-black leading-none tracking-[-0.02em] text-[#193b5a] sm:text-[7px]">{item.name}</span>
+    return <Link to={`/app/food/${item.id}`} aria-label={`${item.name}, ${item.quantity} ${item.unit}`} title={item.name} className={`group flex flex-col items-center gap-0.5 text-[#193b5a] transition-transform hover:-translate-y-0.5 hover:scale-105 ${visualLarge ? 'w-12 sm:w-14' : 'w-9 sm:w-11'}`}>
+      <span className={`relative flex items-center justify-center rounded-full bg-white/92 shadow-sm ${visualLarge ? 'size-9 sm:size-11' : 'size-6 sm:size-8'}`}><span className={`absolute right-0 top-0 rounded-full ring-1 ring-white ${statusColors[item.freshness]} ${visualLarge ? 'size-2' : 'size-1.5'}`} /><FoodIcon name={item.name} category={item.category} className={visualLarge ? 'size-5 sm:size-6' : 'size-3.5 sm:size-4'} /></span>
+      <span className={`w-full truncate text-center font-black leading-none tracking-[-0.02em] text-[#193b5a] ${visualLarge ? 'text-[7px] sm:text-[9px]' : 'text-[5px] sm:text-[7px]'}`}>{item.name}</span>
     </Link>
   }
 
