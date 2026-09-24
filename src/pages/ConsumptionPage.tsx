@@ -2,17 +2,22 @@ import { ArrowLeft, Check, CircleCheck, Clock3, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useFoodContext } from '../context/FoodContext'
-import { recipes } from '../data/mockData'
+import { useRecipeContext } from '../context/RecipeContext'
+import { matchRecipes } from '../domain/rescue'
 
 type Decision = { used: number; leftover: number }
 const wholeUnits = new Set(['piece', 'bag'])
 
 export function ConsumptionPage() {
-  const { items, loading, consumeItem, createLeftoverItem } = useFoodContext()
+  const { items, rawItems, loading, consumeItem, createLeftoverItem } = useFoodContext()
+  const { recipes, isLoading: recipesLoading } = useRecipeContext()
   const [searchParams] = useSearchParams()
   const recipeTitle = searchParams.get('recipe')
-  const recipe = recipes.find((entry) => entry.title === recipeTitle)
-  const cookingItems = items.filter((item) => item.quantity > 0 && (!recipe || recipe.ingredients.some((ingredient) => item.name.toLowerCase().includes(ingredient.toLowerCase()) || ingredient.toLowerCase().includes(item.name.toLowerCase()))))
+  const recipe = recipeTitle ? recipes.find((entry) => entry.title === recipeTitle) : undefined
+  // With a recipe, cook only the kitchen items matched to its ingredient list (the same
+  // matching the recipe page uses); a missing recipe must never fall back to every item.
+  const recipeItemIds = recipe ? new Set(matchRecipes(rawItems, [recipe])[0].matchedIngredients.map((match) => match.inventoryItem.id)) : null
+  const cookingItems = items.filter((item) => item.quantity > 0 && (!recipeTitle || recipeItemIds?.has(item.id)))
   const [currentIndex, setCurrentIndex] = useState(0)
   const [decisions, setDecisions] = useState<Record<string, Decision>>({})
   const [someAmount, setSomeAmount] = useState('')
@@ -67,8 +72,8 @@ export function ConsumptionPage() {
     }
   }
 
-  if (loading) return <div className="w-full max-w-3xl rounded-3xl border border-[#bdebf0] bg-white p-10 text-center text-[#5e7f8b]">Loading your ingredients...</div>
-  if (!cookingItems.length) return <div className="w-full max-w-3xl space-y-4"><Link to="/app" className="inline-flex items-center gap-2 font-bold text-[#145d72]"><ArrowLeft size={16} /> Back to kitchen</Link><p className="rounded-3xl border border-dashed border-[#b9dce7] bg-white p-10 text-center text-[#5e7f8b]">There are no active ingredients to cook with.</p></div>
+  if (loading || (recipeTitle && recipesLoading)) return <div className="w-full max-w-3xl rounded-3xl border border-[#bdebf0] bg-white p-10 text-center text-[#5e7f8b]">Loading your ingredients...</div>
+  if (!cookingItems.length) return <div className="w-full max-w-3xl space-y-4"><Link to="/app" className="inline-flex items-center gap-2 font-bold text-[#145d72]"><ArrowLeft size={16} /> Back to kitchen</Link><p className="rounded-3xl border border-dashed border-[#b9dce7] bg-white p-10 text-center text-[#5e7f8b]">{recipeTitle ? 'None of your kitchen items match this recipe yet.' : 'There are no active ingredients to cook with.'}</p></div>
   if (isComplete) return <div className="flex min-h-[70vh] w-full items-center justify-center bg-[#eaf8fa] px-4"><div className="w-full max-w-md rounded-[1.5rem] border border-[#bdebf0] bg-white p-8 text-center"><span className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#d9f5f8] text-[#145d72]"><Check size={28} /></span><h1 className="mt-5 text-2xl font-black text-[#193b5a]">Cooking updated</h1><p className="mt-2 text-sm text-[#6f8b95]">Your kitchen inventory and leftovers are up to date.</p><Link to="/app" className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#20c4d6] font-black text-[#063e4d]">Back to kitchen</Link></div></div>
   if (!currentItem) return <div className="flex min-h-[70vh] w-full items-center justify-center bg-[#eaf8fa] px-4"><div className="w-full max-w-md rounded-[1.5rem] border border-[#bdebf0] bg-white p-8 text-center text-sm font-bold text-[#477d8d]">Updating your kitchen...</div></div>
 

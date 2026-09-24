@@ -19,7 +19,7 @@ const freezerShelfPositions: Record<string, string> = {
 
 const pantryShelfPositions: Record<string, string> = {
   'pantry-eye-level': 'left-[18%] top-[39%] w-[64%]',
-  'pantry-lower': 'left-[18%] top-[68%] w-[64%]',
+  'pantry-lower': 'left-[18%] top-[82%] w-[64%]',
 }
 
 export function Fridge({ items, location }: { items: FoodItem[]; location: StorageLocation }) {
